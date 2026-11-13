@@ -144,6 +144,16 @@ describe("remove and undo", () => {
     const grown = workloadReducer(loaded(), { type: "setCount", count: 1_000_000 });
     expect(grown.rows.length).toBeLessThanOrEqual(200);
   });
+
+  test.each(["add", "setCount"] as const)("%s ends removal undo so restoration cannot exceed the editor cap", (type) => {
+    let state = workloadReducer(loaded(), { type: "setCount", count: 200 });
+    state = workloadReducer(state, { type: "setCount", count: 1 });
+    const grown = workloadReducer(state, type === "add" ? { type } : { type, count: 200 });
+    expect(grown.undo).toBeNull();
+    const restored = workloadReducer(grown, { type: "undo" });
+    expect(restored.rows).toEqual(grown.rows);
+    expect(restored.rows.length).toBeLessThanOrEqual(200);
+  });
 });
 
 describe("touch and attempt", () => {

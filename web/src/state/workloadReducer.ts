@@ -93,7 +93,7 @@ export function workloadReducer(state: WorkloadState, action: WorkloadAction): W
     case "add": {
       if (state.rows.length >= MAX_EDITOR_ROWS) return state;
       const added = blankRows(state.rows, 1, state.nextKey);
-      return changed(state, { rows: [...state.rows, ...added], nextKey: state.nextKey + added.length });
+      return changed(state, { rows: [...state.rows, ...added], nextKey: state.nextKey + added.length, undo: null });
     }
     case "remove":
       return removeRows(state, new Set([action.rowKey]));
@@ -102,7 +102,7 @@ export function workloadReducer(state: WorkloadState, action: WorkloadAction): W
       if (target === state.rows.length) return state;
       if (target > state.rows.length) {
         const added = blankRows(state.rows, target - state.rows.length, state.nextKey);
-        return changed(state, { rows: [...state.rows, ...added], nextKey: state.nextKey + added.length });
+        return changed(state, { rows: [...state.rows, ...added], nextKey: state.nextKey + added.length, undo: null });
       }
       return removeRows(state, new Set(state.rows.slice(target).map((row) => row.key)));
     }
