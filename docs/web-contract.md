@@ -114,5 +114,5 @@ Details of the implementation that the sections above leave open:
   exception thrown by a JavaScript getter on an input object is not caught and reaches the
   caller of `simulate`; plain data objects never trigger it.
 - `schedlab.mjs` exports the factory as its default export; its types are in
-  `web/src/wasm/schedlab.d.mts`. The test files declare the few Node APIs they use in
-  `web/tests/node.d.ts` because `@types/node` is not a dependency.
+  `web/src/wasm/schedlab.d.mts`. The tests get their Node types from the `@types/node`
+  dev dependency.

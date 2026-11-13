@@ -167,7 +167,8 @@
     font-weight: 500;
     white-space: normal;
     overflow-wrap: anywhere;
-    max-inline-size: 11rem;
+    min-inline-size: 5rem;
+    max-inline-size: 9rem;
   }
 
   .data-table thead th:first-child {
