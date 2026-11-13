@@ -1,6 +1,7 @@
 #include "schedlab/metrics.hpp"
 
 #include <algorithm>
+#include <bit>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -45,6 +46,23 @@ void derive_waiting_turnaround_response(std::vector<ProcessResult>& results) {
   }
 }
 
+double average(std::int64_t quotient, std::int64_t remainder, std::int64_t count) {
+  if (count == 0) return 0.0;
+  const auto whole = static_cast<std::uint64_t>(quotient + remainder / count);
+  remainder %= count;
+  if (whole < (std::uint64_t{1} << 53)) {
+    return static_cast<double>(whole) + static_cast<double>(remainder) / static_cast<double>(count);
+  }
+  // Above 2^53, round the exact rational once to the nearest double, ties to even.
+  const auto spacing = std::uint64_t{1} << (std::bit_width(whole) - 53);
+  auto grid = whole / spacing;
+  const auto tail = (whole % spacing) * static_cast<std::uint64_t>(count) +
+                    static_cast<std::uint64_t>(remainder);
+  const auto half = spacing / 2 * static_cast<std::uint64_t>(count);
+  if (tail > half || (tail == half && grid % 2 != 0)) ++grid;
+  return static_cast<double>(grid) * static_cast<double>(spacing);
+}
+
 }  // namespace
 
 Schedule compute_schedule_metrics(const std::vector<Process>& processes,
@@ -67,14 +85,8 @@ Schedule compute_schedule_metrics(const std::vector<Process>& processes,
     makespan = std::max(makespan, result.completion);
   }
 
-  schedule.average_waiting = count > 0
-      ? static_cast<double>(waiting_quotient + waiting_remainder / count) +
-            static_cast<double>(waiting_remainder % count) / static_cast<double>(count)
-      : 0.0;
-  schedule.average_turnaround = count > 0
-      ? static_cast<double>(turnaround_quotient + turnaround_remainder / count) +
-            static_cast<double>(turnaround_remainder % count) / static_cast<double>(count)
-      : 0.0;
+  schedule.average_waiting = average(waiting_quotient, waiting_remainder, count);
+  schedule.average_turnaround = average(turnaround_quotient, turnaround_remainder, count);
   schedule.makespan = makespan;
   schedule.segments = std::move(segments);
   return schedule;

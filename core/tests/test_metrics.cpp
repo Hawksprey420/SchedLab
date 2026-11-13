@@ -91,6 +91,9 @@ void large_integer_average_stays_exact() {
       {proc("A", 0, 9'007'199'254'740'989), proc("B", 0, 1), proc("C", 0, 1)},
       Algorithm::FCFS);
   CHECK_EQ(s.average_turnaround, 9'007'199'254'740'990.0);
+  const Schedule native = schedlab::simulate_single_core(
+      {proc("A", 0, 9'007'199'254'740'993), proc("B", 0, 1)}, Algorithm::FCFS);
+  CHECK_EQ(native.average_turnaround, 9'007'199'254'740'994.0);
 }
 
 void unknown_process_in_segments_is_an_error() {
