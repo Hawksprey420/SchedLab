@@ -11,16 +11,32 @@ compiled to WebAssembly, React UI with input, validation, Gantt chart and metric
 - The owner's agent builds the C++ core that `plan.md` section 9 suggested for Lawrence;
   no separate Lawrence review is required.
 - Commits carry no AI attribution trailers.
+- Cheaper models do the implementation and review; Codex and Antigravity may be used as
+  independent reviewers when their work is checked.
+- Web UI: plan stack only (React, TypeScript, Vite, Tailwind, SVG), built with the
+  modern-web-guidance, senior-frontend, frontend-design and antislop skills, antislop
+  applied during the work. Direction: textbook / print-ready (`DESIGN.md`). Gantt
+  processes use colour, pattern and label.
+- Code must stay modular and maintainable; docs follow the antislop copy rules.
 
 ## State
 
 | Task | Branch | Status |
 |---|---|---|
-| Repository scaffold, plan, agent rules | `feature/core-fcfs-sjf` | in progress |
-| C++ core, validation, metrics, T1-T8 | `feature/core-fcfs-sjf` | not started |
-| WASM bridge and parity test | `feature/wasm-bridge` | not started |
+| Scaffold, plan, agent rules, skills | `feature/core-fcfs-sjf` | merged (PR 1) |
+| C++ core, validation, metrics, CLI, T1-T8 | `feature/core-fcfs-sjf` | merged (PR 1), `954734b` |
+| WASM bridge and parity test | `feature/wasm-bridge` | waiting on Emscripten SDK install |
 | Web UI (P0) | `feature/web-ui` | not started |
+
+## Latest verified result
+
+`ctest --test-dir build/core -C Release`: 11 of 11 pass (MSVC, Visual Studio 2026) at
+`a95281e`. Codex reviewed PR 1 independently, including 400 generated schedules checked
+against its own reference implementation; its one confirmed defect (CLI range message)
+and its BOM finding are fixed with regression cases. Not yet built with Emscripten, GCC
+or Clang.
 
 ## Next action
 
-Implement `core/` test first against the contract in `docs/core-contract.md`.
+When `emcc` is available, implement `docs/web-contract.md` (binding, `build-wasm.ps1`,
+parity test) on `feature/wasm-bridge`.

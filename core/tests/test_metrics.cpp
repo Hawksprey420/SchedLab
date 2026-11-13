@@ -60,7 +60,7 @@ void generated_workload_is_valid_and_starts_idle() {
 
 void averages_do_not_overflow_int64() {
   // Two jobs of 4e18 ticks: the turnaround sum (4e18 + 8e18) exceeds INT64_MAX, so it
-  // must be accumulated in floating point.
+  // must not be accumulated in an int64 sum.
   constexpr std::int64_t kBurst = 4'000'000'000'000'000'000;
   const std::vector<Process> input = {proc("A", 0, kBurst), proc("B", 0, kBurst)};
   const Schedule s = schedlab::simulate_single_core(input, Algorithm::FCFS);
@@ -86,6 +86,16 @@ void metrics_are_derived_from_segments() {
   CHECK_EQ(s.makespan, 5);
 }
 
+void large_integer_average_stays_exact() {
+  const Schedule s = schedlab::simulate_single_core(
+      {proc("A", 0, 9'007'199'254'740'989), proc("B", 0, 1), proc("C", 0, 1)},
+      Algorithm::FCFS);
+  CHECK_EQ(s.average_turnaround, 9'007'199'254'740'990.0);
+  const Schedule native = schedlab::simulate_single_core(
+      {proc("A", 0, 9'007'199'254'740'993), proc("B", 0, 1)}, Algorithm::FCFS);
+  CHECK_EQ(native.average_turnaround, 9'007'199'254'740'994.0);
+}
+
 void unknown_process_in_segments_is_an_error() {
   bool threw = false;
   try {
@@ -102,6 +112,7 @@ int main() {
   invariants_hold_for_every_workload_and_algorithm();
   generated_workload_is_valid_and_starts_idle();
   averages_do_not_overflow_int64();
+  large_integer_average_stays_exact();
   metrics_are_derived_from_segments();
   unknown_process_in_segments_is_an_error();
   return check::finish("test_metrics");
