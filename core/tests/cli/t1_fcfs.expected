@@ -1,0 +1,8 @@
+SEGMENT CPU0 P1 0 8
+SEGMENT CPU0 P2 8 12
+SEGMENT CPU0 P3 12 14
+RESULT P1 start=0 completion=8 waiting=0 turnaround=8 response=0
+RESULT P2 start=8 completion=12 waiting=8 turnaround=12 response=8
+RESULT P3 start=12 completion=14 waiting=12 turnaround=14 response=12
+AVERAGE waiting=6.6667 turnaround=11.3333
+MAKESPAN 14
