@@ -20,7 +20,7 @@ std::vector<Segment> run_algorithm(const std::vector<Process>& processes, Algori
     case Algorithm::FCFS:
       return fcfs_segments(processes);
     case Algorithm::SJF_NON_PREEMPTIVE:
-      throw std::logic_error("SJF is not implemented yet");
+      return sjf_segments(processes);
   }
   throw std::invalid_argument("unknown algorithm");
 }

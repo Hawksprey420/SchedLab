@@ -19,6 +19,7 @@ endfunction()
 add_library(schedlab_core STATIC
   src/validate.cpp
   src/fcfs.cpp
+  src/sjf.cpp
   src/metrics.cpp
   src/scheduler.cpp
 )
@@ -35,3 +36,4 @@ endfunction()
 
 schedlab_add_test(test_validation)
 schedlab_add_test(test_fcfs)
+schedlab_add_test(test_sjf)
