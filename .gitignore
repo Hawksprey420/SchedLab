@@ -1,0 +1,9 @@
+build/
+node_modules/
+dist/
+web/public/wasm/
+web/test-results/
+web/playwright-report/
+*.log
+.vs/
+CMakeUserPresets.json
