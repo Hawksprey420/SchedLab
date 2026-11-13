@@ -29,6 +29,16 @@ Adapted from the Binturong/Bintanong workflow.
    result, decisions, blockers, one next action.
 7. Report real results: what passed, what was skipped, what could not be checked.
 
+## Skills
+
+| Task | Read before implementation |
+|---|---|
+| Any commit message | `.claude/skills/conventional-commits/SKILL.md` |
+| Any UI code under `web/` | `.claude/skills/senior-frontend/SKILL.md` and its `references/ui-checklist.md`; verify in a real browser with `scripts/check_ui.mjs` |
+
+Both are carried over from the Bintanong repository; `senior-frontend` is MIT-licensed
+third-party material (see its `references/NOTICE.md`).
+
 ## Commands
 
 ```powershell
