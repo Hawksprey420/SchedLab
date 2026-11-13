@@ -35,8 +35,9 @@ export function ProcessField({ rowKey, field, label, value, error, onChange, onB
         aria-describedby={error !== undefined ? fieldErrorId(rowKey, field) : undefined}
         onChange={(event) => onChange(rowKey, field, event.target.value)}
         onBlur={(event) => {
-          // Run validates every field; inserting blur errors now could move it before pointerup.
-          if (event.relatedTarget instanceof HTMLButtonElement && event.relatedTarget.type === "submit") return;
+          // Inserting blur errors could move an action before pointerup; Run validates every field.
+          if (event.relatedTarget instanceof HTMLElement &&
+              event.relatedTarget.matches("button, a[href], select, input[type=radio], input[type=checkbox]")) return;
           onBlur(rowKey, field);
         }}
         className={[

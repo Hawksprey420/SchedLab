@@ -150,3 +150,52 @@ test("Reset clears an invalid process-count draft", async ({ page }) => {
   await expect(page.getByLabel("Number of processes")).toHaveValue("3");
   await expect(page.getByLabel("Number of processes")).toHaveAttribute("aria-invalid", "false");
 });
+
+for (const count of [0, 1]) {
+  test(`a phone Run click commits a smaller count of ${count}`, async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 900 });
+    await page.goto("/");
+    await expect(run(page)).toBeEnabled();
+    await page.getByLabel("Number of processes").fill(String(count));
+    await run(page).click();
+    await expect(page.getByLabel("Number of processes")).toHaveValue(String(count));
+    if (count === 0) {
+      await expect(page.getByText("At least one process is required")).toBeVisible();
+      await expect(resultsTable(page)).toHaveCount(0);
+    } else {
+      await expect(scheduleItems(page)).toHaveText(["0 to 8: P1"]);
+      await expect(resultsTable(page).locator("tbody tr")).toHaveCount(1);
+    }
+  });
+}
+
+test("phone blur validation does not swallow Add or algorithm clicks", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 900 });
+  await page.goto("/");
+  await expect(run(page)).toBeEnabled();
+  await page.getByLabel("Arrival of P3").fill("-1");
+  await page.getByRole("button", { name: "Add process", exact: true }).click();
+  await expect(page.getByLabel("Number of processes")).toHaveValue("4");
+  await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await page.getByLabel("Arrival of P3").fill("-1");
+  await page.getByRole("radio", { name: /Shortest job first/ }).check();
+  await expect(page.getByRole("radio", { name: /Shortest job first/ })).toBeChecked();
+});
+
+test("phone count drafts do not swallow Add or Load example clicks", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 900 });
+  await page.goto("/");
+  await expect(run(page)).toBeEnabled();
+  for (const value of ["no", "1"]) {
+    await page.getByRole("button", { name: "Reset", exact: true }).click();
+    await page.getByLabel("Number of processes").fill(value);
+    await page.getByRole("button", { name: "Add process", exact: true }).click();
+    await expect(page.getByLabel("Number of processes")).toHaveValue("4");
+  }
+  await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await page.getByLabel("Example workload").selectOption("staggered-arrivals");
+  await page.getByLabel("Number of processes").fill("no");
+  await page.getByRole("button", { name: "Load example" }).click();
+  await expect(page.getByLabel("Number of processes")).toHaveValue("3");
+  await expect(page.getByLabel("Arrival of P3")).toHaveValue("2");
+});

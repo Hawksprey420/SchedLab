@@ -183,20 +183,32 @@ export function useSchedLab() {
       const count = parseCount(String(new FormData(event.currentTarget).get("process-count") ?? ""));
       if (!count.ok) {
         simulation.clear();
+        const field = event.currentTarget.elements.namedItem("process-count");
+        if (field instanceof HTMLInputElement) {
+          field.setCustomValidity(count.message);
+          field.reportValidity();
+          field.setCustomValidity("");
+        }
         requestFocus("process-count");
         announce(count.message);
         return;
       }
 
-      if (!parsed.ok) {
+      const submitted = count.value === rows.length
+        ? workload
+        : workloadReducer(workload, { type: "setCount", count: count.value });
+      if (submitted !== workload) dispatch({ type: "setCount", count: count.value });
+      const input = submitted === workload ? parsed : parseWorkload(submitted.rows);
+
+      if (!input.ok) {
         dispatch({ type: "attempt" });
-        const first = parsed.issues[0];
+        const first = input.issues[0];
         if (first) requestFocus(fieldElementId(first.rowKey, first.field));
-        announce(`${parsed.issues.length} ${parsed.issues.length === 1 ? "problem" : "problems"} found. The first one has focus.`, 700);
+        announce(`${input.issues.length} ${input.issues.length === 1 ? "problem" : "problems"} found. The first one has focus.`, 700);
         return;
       }
 
-      const record = simulation.run(parsed.processes, algorithm, workload.version);
+      const record = simulation.run(input.processes, algorithm, submitted.version);
       if (!record) return;
       if (record.outcome.ok) {
         announce(resultSentence(algorithm, record.outcome.schedule));
@@ -206,13 +218,13 @@ export function useSchedLab() {
       }
 
       dispatch({ type: "attempt" });
-      const mapped = mapCoreErrors(record.outcome.errors, rows);
+      const mapped = mapCoreErrors(record.outcome.errors, submitted.rows);
       const first = mapped.fieldIssues[0];
       requestFocus(first ? fieldElementId(first.rowKey, first.field) : "problems-heading");
       const total = record.outcome.errors.length;
       announce(`The simulator rejected the workload: ${total} ${total === 1 ? "problem" : "problems"}.`, 700);
     },
-    [engine.status, parsed, simulation, algorithm, workload.version, rows, requestFocus, announce],
+    [engine.status, parsed, simulation, algorithm, workload, rows, requestFocus, announce],
   );
 
   return {

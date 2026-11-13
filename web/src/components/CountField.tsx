@@ -12,7 +12,7 @@ const ERROR_ID = "process-count-error";
 const HINT_ID = "process-count-hint";
 
 /**
- * "Number of processes". The table changes when the reader leaves the field or presses Enter,
+ * "Number of processes". The table changes when the reader presses Enter or Run,
  * not per keystroke: typing 10 must not delete rows on the way through 1.
  */
 export function CountField({ rowCount, onCommit, onInvalid, onEdit }: CountFieldProps) {
@@ -26,16 +26,19 @@ export function CountField({ rowCount, onCommit, onInvalid, onEdit }: CountField
     setError(null);
   }
 
-  function commit() {
-    if (draft === null) return;
+  function validateDraft() {
+    if (draft === null) return null;
     const parsed = parseCount(draft);
-    if (parsed.ok) {
+    setError(parsed.ok ? null : parsed.message);
+    if (!parsed.ok) onInvalid(parsed.message);
+    return parsed;
+  }
+
+  function commit() {
+    const parsed = validateDraft();
+    if (parsed?.ok) {
       onCommit(parsed.value);
       setDraft(null);
-      setError(null);
-    } else {
-      setError(parsed.message);
-      onInvalid(parsed.message);
     }
   }
 
@@ -54,11 +57,21 @@ export function CountField({ rowCount, onCommit, onInvalid, onEdit }: CountField
         aria-invalid={error !== null}
         aria-describedby={error !== null ? `${HINT_ID} ${ERROR_ID}` : HINT_ID}
         onChange={(event) => {
+          event.currentTarget.setCustomValidity("");
           onEdit();
           setDraft(event.target.value);
           setError(null);
         }}
-        onBlur={commit}
+        onBlur={(event) => {
+          // Actions must finish before an error can move their pointer target.
+          if (event.relatedTarget instanceof HTMLElement &&
+              event.relatedTarget.matches("button, a[href], select, input[type=radio], input[type=checkbox]")) return;
+          validateDraft();
+        }}
+        onInvalid={(event) => {
+          event.preventDefault();
+          setError(event.currentTarget.validationMessage);
+        }}
         onKeyDown={(event) => {
           // Enter would otherwise submit the form and run the simulation.
           if (event.key === "Enter") {
@@ -72,7 +85,7 @@ export function CountField({ rowCount, onCommit, onInvalid, onEdit }: CountField
         ].join(" ")}
       />
       <p id={HINT_ID} className="mt-1 max-w-[16rem] text-xs text-ink-muted">
-        Rows are added or removed at the end when you leave the field or press Enter.
+        Press Enter or Run to apply this count. Adding rows or loading an example discards an unapplied count.
       </p>
       {error !== null && (
         <p id={ERROR_ID} className="mt-1 max-w-[16rem] text-sm leading-snug text-danger">
