@@ -54,19 +54,27 @@ Schedule compute_schedule_metrics(const std::vector<Process>& processes,
   record_start_and_completion(segments, schedule.results);
   derive_waiting_turnaround_response(schedule.results);
 
-  // Summed as double: 100 waiting times of up to INT64_MAX each would overflow int64.
-  double waiting_sum = 0.0;
-  double turnaround_sum = 0.0;
+  // Divide before summing: quotients fit in int64, remainders sum to at most n*(n-1).
+  const auto count = static_cast<std::int64_t>(schedule.results.size());
+  std::int64_t waiting_quotient = 0, waiting_remainder = 0;
+  std::int64_t turnaround_quotient = 0, turnaround_remainder = 0;
   std::int64_t makespan = 0;
   for (const ProcessResult& result : schedule.results) {
-    waiting_sum += static_cast<double>(result.waiting);
-    turnaround_sum += static_cast<double>(result.turnaround);
+    waiting_quotient += result.waiting / count;
+    waiting_remainder += result.waiting % count;
+    turnaround_quotient += result.turnaround / count;
+    turnaround_remainder += result.turnaround % count;
     makespan = std::max(makespan, result.completion);
   }
 
-  const double count = static_cast<double>(schedule.results.size());
-  schedule.average_waiting = count > 0 ? waiting_sum / count : 0.0;
-  schedule.average_turnaround = count > 0 ? turnaround_sum / count : 0.0;
+  schedule.average_waiting = count > 0
+      ? static_cast<double>(waiting_quotient + waiting_remainder / count) +
+            static_cast<double>(waiting_remainder % count) / static_cast<double>(count)
+      : 0.0;
+  schedule.average_turnaround = count > 0
+      ? static_cast<double>(turnaround_quotient + turnaround_remainder / count) +
+            static_cast<double>(turnaround_remainder % count) / static_cast<double>(count)
+      : 0.0;
   schedule.makespan = makespan;
   schedule.segments = std::move(segments);
   return schedule;
