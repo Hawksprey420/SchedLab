@@ -16,6 +16,13 @@ function(schedlab_enable_warnings target)
   endif()
 endfunction()
 
+# The binding catches whatever the core or JavaScript throws, which needs wasm exceptions.
+# Set before any target exists so the library and the module are compiled the same way.
+if(EMSCRIPTEN)
+  add_compile_options(-fwasm-exceptions)
+  add_link_options(-fwasm-exceptions)
+endif()
+
 add_library(schedlab_core STATIC
   src/validate.cpp
   src/fcfs.cpp
@@ -28,6 +35,20 @@ add_library(schedlab_core STATIC
 )
 target_include_directories(schedlab_core PUBLIC include)
 schedlab_enable_warnings(schedlab_core)
+
+# Browser build: one ES module with the wasm embedded (see scripts/build-wasm.ps1).
+if(EMSCRIPTEN)
+  add_executable(schedlab_wasm src/wasm_bindings.cpp)
+  target_link_libraries(schedlab_wasm PRIVATE schedlab_core embind)
+  schedlab_enable_warnings(schedlab_wasm)
+  set_target_properties(schedlab_wasm PROPERTIES OUTPUT_NAME schedlab SUFFIX .mjs)
+  target_link_options(schedlab_wasm PRIVATE
+    -O2
+    -sMODULARIZE=1 -sEXPORT_ES6=1 -sSINGLE_FILE=1 -sENVIRONMENT=web,node
+    -sEXPORT_NAME=createSchedLabModule
+    -sFILESYSTEM=0 -sERROR_ON_UNDEFINED_SYMBOLS=1)
+  return()  # tests and the CLI are native-only
+endif()
 
 # Each test is a plain executable that returns nonzero when a check fails.
 function(schedlab_add_test name)
