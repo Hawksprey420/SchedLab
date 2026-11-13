@@ -1,0 +1,5 @@
+# T2: staggered arrivals, shows SJF does not preempt
+P1 0 8 1
+
+P2 1 4 1
+P3 2 2 1

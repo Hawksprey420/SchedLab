@@ -1,0 +1,3 @@
+ERROR 0 burst burst must be > 0, got 0
+ERROR 1 id duplicate id "P1" (already used by process 0)
+ERROR 1 arrival arrival must be >= 0, got -1

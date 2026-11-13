@@ -1,0 +1,2 @@
+ERROR 1 arrival line 3: arrival is not a base-10 integer that fits in 64 bits: "abc"
+ERROR 2 line line 4: expected 4 fields (id arrival burst priority), got 3

@@ -1,0 +1,4 @@
+# second data line is malformed
+P1 0 5 1
+P2 abc 5 1
+P3 0 5
