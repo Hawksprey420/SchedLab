@@ -20,6 +20,7 @@ interface ProcessEditorProps {
   onRemove: (rowKey: number) => void;
   onCommitCount: (count: number) => void;
   onInvalidCount: (message: string) => void;
+  onEditCount: () => void;
   onUndo: () => void;
   onLoadExample: (example: ExampleWorkload) => void;
 }
@@ -35,6 +36,7 @@ export function ProcessEditor({
   onRemove,
   onCommitCount,
   onInvalidCount,
+  onEditCount,
   onUndo,
   onLoadExample,
 }: ProcessEditorProps) {
@@ -48,7 +50,7 @@ export function ProcessEditor({
       </p>
 
       <div className="mt-4 flex flex-wrap items-start gap-x-6 gap-y-4">
-        <CountField rowCount={rows.length} onCommit={onCommitCount} onInvalid={onInvalidCount} />
+        <CountField key={rows[0]?.key ?? "empty"} rowCount={rows.length} onCommit={onCommitCount} onInvalid={onInvalidCount} onEdit={onEditCount} />
         <div className="min-w-0 flex-1 basis-60">
           <ExampleLoader examples={examples} onLoad={onLoadExample} />
         </div>

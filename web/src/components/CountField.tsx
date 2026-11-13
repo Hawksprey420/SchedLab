@@ -5,6 +5,7 @@ interface CountFieldProps {
   rowCount: number;
   onCommit: (count: number) => void;
   onInvalid: (message: string) => void;
+  onEdit: () => void;
 }
 
 const ERROR_ID = "process-count-error";
@@ -14,9 +15,16 @@ const HINT_ID = "process-count-hint";
  * "Number of processes". The table changes when the reader leaves the field or presses Enter,
  * not per keystroke: typing 10 must not delete rows on the way through 1.
  */
-export function CountField({ rowCount, onCommit, onInvalid }: CountFieldProps) {
+export function CountField({ rowCount, onCommit, onInvalid, onEdit }: CountFieldProps) {
+  const [previousCount, setPreviousCount] = useState(rowCount);
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  if (previousCount !== rowCount) {
+    setPreviousCount(rowCount);
+    setDraft(null);
+    setError(null);
+  }
 
   function commit() {
     if (draft === null) return;
@@ -46,6 +54,7 @@ export function CountField({ rowCount, onCommit, onInvalid }: CountFieldProps) {
         aria-invalid={error !== null}
         aria-describedby={error !== null ? `${HINT_ID} ${ERROR_ID}` : HINT_ID}
         onChange={(event) => {
+          onEdit();
           setDraft(event.target.value);
           setError(null);
         }}

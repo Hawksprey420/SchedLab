@@ -130,3 +130,23 @@ test("simulator: results, invalid input, undo, keyboard and layout", async ({ pa
 
   expect(problems).toEqual([]);
 });
+
+test("an invalid process-count draft cannot run the old table", async ({ page }) => {
+  await page.goto("/");
+  await expect(run(page)).toBeEnabled();
+  await page.getByLabel("Number of processes").fill("100000");
+  await run(page).click();
+  await expect(page.getByLabel("Number of processes")).toHaveAttribute("aria-invalid", "true");
+  await expect(resultsTable(page)).toHaveCount(0);
+  await expect(page.getByLabel("Number of processes")).toBeFocused();
+});
+
+test("Reset clears an invalid process-count draft", async ({ page }) => {
+  await page.goto("/");
+  await expect(run(page)).toBeEnabled();
+  await page.getByLabel("Number of processes").fill("no");
+  await page.getByLabel("Number of processes").press("Enter");
+  await page.getByRole("button", { name: "Reset" }).click();
+  await expect(page.getByLabel("Number of processes")).toHaveValue("3");
+  await expect(page.getByLabel("Number of processes")).toHaveAttribute("aria-invalid", "false");
+});

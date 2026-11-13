@@ -34,7 +34,11 @@ export function ProcessField({ rowKey, field, label, value, error, onChange, onB
         // The error is referenced only while it is visible, or it would be read out from page load.
         aria-describedby={error !== undefined ? fieldErrorId(rowKey, field) : undefined}
         onChange={(event) => onChange(rowKey, field, event.target.value)}
-        onBlur={() => onBlur(rowKey, field)}
+        onBlur={(event) => {
+          // Run validates every field; inserting blur errors now could move it before pointerup.
+          if (event.relatedTarget instanceof HTMLButtonElement && event.relatedTarget.type === "submit") return;
+          onBlur(rowKey, field);
+        }}
         className={[
           "block min-h-11 w-full min-w-0 rounded-control border bg-paper px-1.5",
           isId ? "text-start font-mono text-sm" : "text-end",

@@ -37,6 +37,7 @@ export function App() {
               onRemove={app.removeRow}
               onCommitCount={app.commitCount}
               onInvalidCount={app.announce}
+              onEditCount={app.clearResult}
               onUndo={app.undo}
               onLoadExample={app.loadExample}
             />

@@ -4,7 +4,7 @@ import { DEFAULT_EXAMPLE, type ExampleWorkload } from "../lib/examples";
 import { capitalize, formatAverage, formatTicks } from "../lib/format";
 import { mapCoreErrors } from "../lib/mapErrors";
 import { parseRowField, parseWorkload } from "../lib/parseWorkload";
-import type { NumericField } from "../lib/parseField";
+import { parseCount, type NumericField } from "../lib/parseField";
 import { describeRemoval } from "../lib/removalText";
 import type { Algorithm, Schedule } from "../models/types";
 import { fieldElementId, fieldKey, type FieldName, type ProcessRow } from "../models/workload";
@@ -176,9 +176,17 @@ export function useSchedLab() {
   );
 
   const run = useCallback(
-    (event: FormEvent) => {
+    (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (engine.status !== "ready") return;
+
+      const count = parseCount(String(new FormData(event.currentTarget).get("process-count") ?? ""));
+      if (!count.ok) {
+        simulation.clear();
+        requestFocus("process-count");
+        announce(count.message);
+        return;
+      }
 
       if (!parsed.ok) {
         dispatch({ type: "attempt" });
@@ -230,5 +238,6 @@ export function useSchedLab() {
     reset,
     changeAlgorithm,
     run,
+    clearResult: simulation.clear,
   };
 }
