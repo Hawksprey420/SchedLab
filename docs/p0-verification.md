@@ -15,10 +15,10 @@ PowerShell, Windows, MSVC/Visual Studio 2026, Node 22.22.3, Chromium via Playwri
 | `cmake --build build/core --config Release` | exit 0 |
 | `ctest --test-dir build/core --output-on-failure -C Release` | 13/13 CTest entries passed |
 | `npm install` in `web/` | exit 0; zero audit vulnerabilities reported |
-| `npm test` | 317/317 tests, 13 files passed, including native/WASM parity |
+| `npm test` | 319/319 tests, 13 files passed, including native/WASM parity |
 | `npm run typecheck` | exit 0 |
 | `npm run build` | exit 0 |
-| `npm run test:e2e` | 9/9 Chromium tests passed against the production build |
+| `npm run test:e2e` | 13/13 Chromium tests passed against the production build |
 | frontend skill `scripts/check_ui.mjs`, 375/1280 px | zero page overflow, console errors or DOM issues; all 23 visited focus stops visibly focused |
 
 The checker lives at `.claude/skills/senior-frontend/scripts/check_ui.mjs`; see the
@@ -47,8 +47,18 @@ are build/runner messages; normal application browser-console checks were clean.
 - Mobile Run: showing an inline numeric error on blur moved the button between
   pointer-down and pointer-up. Event tracing showed the release/click land on the
   Run section heading, with no form submission. Both 375 px theme cases failed.
-  Blur now leaves validation to Run when focus moves to the submit button; those
-  cases pass and the first invalid field receives focus.
+  Independent review found the same problem with Add and algorithm controls, and
+  with count-field blur resizing before Run/Add/Load. Blur now defers feedback when
+  focus moves to an action. Counts apply on Enter or Run, and Run uses the exact
+  resized editor rows and version. Regressions for direct count-to-0/1 Run and
+  field/count-to-Add/algorithm/Load all failed first and now pass.
+- Idle hit area: the unfilled idle rectangle did not receive hover or tap events
+  inside its outline. Both interactions timed out before the rectangle received
+  an explicit pointer hit area, preserving its unfilled dashed appearance.
+- Undo cap: growing back to 200 rows after removing 199, then Undo, restored 399
+  rows; repetitions could grow the editor without bound. Both add-button and
+  count-growth regressions failed first. Adding rows now expires the previous
+  removal Undo; ordinary field edits preserve it. No current rows are truncated.
 
 PR 2 was independently reviewed and merged at `393670d`, with fixes `1c168a7` and
 `cc1af32`. Its reviewer independently reran 13 CTest entries, 177 bridge Vitest

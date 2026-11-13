@@ -43,8 +43,10 @@ supported. Keep the repository and installed dependencies for an offline rebuild
 
 The page opens with T1 in the editor. Run displays results; editing hides the old
 result. Switching algorithms recomputes a displayed result. Reset loads T1 with
-FCFS. Change the process count with Enter or by leaving the field. Removal offers
-one level of Undo. Focus a Gantt bar and use Left/Right, Home or End to inspect other
+FCFS. Apply a process count with Enter or Run; a count draft does not resize the table
+on blur. Adding rows or loading an example discards an unapplied
+count. Removal offers one level of Undo, which expires when rows are added or an
+example is loaded. Field edits preserve Undo. Focus a Gantt bar and use Left/Right, Home or End to inspect other
 bars; Escape dismisses its readout. Hover and touch also expose exact intervals.
 
 ## Run every check
