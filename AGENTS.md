@@ -45,6 +45,16 @@ third-party material (see its `references/NOTICE.md`).
 cmake -S core -B build/core
 cmake --build build/core --config Release
 ctest --test-dir build/core --output-on-failure -C Release
+
+# WebAssembly module (needs the Emscripten SDK; EMSDK defaults to $HOME\emsdk)
+# Writes web/src/wasm/schedlab.mjs, which is committed: rebuild it whenever core/ changes.
+pwsh scripts/build-wasm.ps1
+
+# Web tests and typecheck (the parity test needs the native build above)
+cd web
+npm install
+npm test
+npm run typecheck
 ```
 
 Git Bash cannot fork on the owner's machine; use PowerShell.

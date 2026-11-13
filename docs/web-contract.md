@@ -101,3 +101,18 @@ does not reimplement the ID and count rules: it maps the core's errors to fields
 few generated workloads through both the native `schedlab-cli` executable and
 `runText`, and requires identical stdout and exit codes. It fails, not skips, when the
 native executable has not been built.
+
+## WebAssembly build
+
+Details of the implementation that the sections above leave open:
+
+- Numbers are accepted only up to +-(2^53 - 1), not the full `int64` range, because a
+  larger double is not the integer the caller typed. The binding also rejects, as a whole-input
+  `processes` error, a schedule whose makespan exceeds 2^53 - 1, so every number it returns
+  is exact. Both checks live in `core/include/schedlab/input_check.hpp`.
+- The module is built with `-fwasm-exceptions` so the binding can catch C++ exceptions. An
+  exception thrown by a JavaScript getter on an input object is not caught and reaches the
+  caller of `simulate`; plain data objects never trigger it.
+- `schedlab.mjs` exports the factory as its default export; its types are in
+  `web/src/wasm/schedlab.d.mts`. The test files declare the few Node APIs they use in
+  `web/tests/node.d.ts` because `@types/node` is not a dependency.
