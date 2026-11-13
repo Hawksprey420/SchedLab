@@ -1,6 +1,6 @@
 // Display formatting only: no value is computed here, the core's numbers are rounded for print.
 import { describe, expect, test } from "vitest";
-import { formatAverage, formatTicks } from "../src/lib/format";
+import { capitalize, formatAverage, formatTicks } from "../src/lib/format";
 
 describe("formatAverage", () => {
   test("shows two decimal places", () => {
@@ -21,5 +21,13 @@ describe("formatTicks", () => {
     expect(formatTicks(14)).toBe("14");
     expect(formatTicks(1000)).toBe("1,000");
     expect(formatTicks(100_000_000)).toBe("100,000,000");
+  });
+});
+
+describe("capitalize", () => {
+  test("raises only the first letter", () => {
+    expect(capitalize('duplicate id "P1"')).toBe('Duplicate id "P1"');
+    expect(capitalize("")).toBe("");
+    expect(capitalize("ID must be unique")).toBe("ID must be unique");
   });
 });

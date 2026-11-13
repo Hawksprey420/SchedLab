@@ -48,6 +48,8 @@
   --accent: var(--accent-light);
   --on-accent: var(--on-accent-light);
   --danger: var(--danger-light);
+  /* Hairline rules derive from the ink, so they follow the theme without a value of their own. */
+  --rule: color-mix(in srgb, var(--ink) 22%, var(--paper));
 
   color-scheme: light dark;
 }

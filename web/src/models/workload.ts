@@ -28,3 +28,14 @@ export function fieldElementId(rowKey: number, field: FieldName): string {
 export function fieldKey(rowKey: number, field: FieldName): string {
   return `${rowKey}:${field}`;
 }
+
+/** Id of the element holding the visible error for a field; referenced by aria-describedby only while shown. */
+export function fieldErrorId(rowKey: number, field: FieldName): string {
+  return `error-${rowKey}-${field}`;
+}
+
+/** A row taken out of the table, remembered with its position so undo puts it back in place. */
+export interface RemovedRow {
+  index: number;
+  row: ProcessRow;
+}

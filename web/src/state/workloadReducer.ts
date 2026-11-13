@@ -1,13 +1,8 @@
 // The editor's workload: rows of text, one level of undo for removals, and which fields the
 // user has already left (so errors appear after interaction, not while typing).
 import type { ProcessInput } from "../models/types";
-import { fieldKey, type FieldName, type ProcessRow } from "../models/workload";
+import { fieldKey, type FieldName, type ProcessRow, type RemovedRow } from "../models/workload";
 import { MAX_EDITOR_ROWS } from "../lib/parseField";
-
-export interface RemovedRow {
-  index: number;
-  row: ProcessRow;
-}
 
 export interface WorkloadState {
   rows: ProcessRow[];

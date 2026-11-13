@@ -12,3 +12,8 @@ export function formatTicks(value: number): string {
 export function formatAverage(value: number): string {
   return twoDecimals.format(value);
 }
+
+/** Capitalises the first letter: the core words its messages in lower case. */
+export function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}

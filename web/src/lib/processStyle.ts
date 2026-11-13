@@ -30,6 +30,11 @@ export function labelHex(tone: LabelTone): string {
   return tone === "dark" ? darkLabel : lightLabel;
 }
 
+/** The same colour as a CSS reference, for drawing. */
+export function labelColor(tone: LabelTone): string {
+  return tone === "dark" ? "var(--label-on-light-fill)" : "var(--label-on-dark-fill)";
+}
+
 const styles = Array.from({ length: PROCESS_COLOR_COUNT }, (_, colorIndex) => {
   const fillHex = plainToken(tokens, `process-${colorIndex}`);
   return { fillHex, labelTone: pickLabelTone(fillHex, darkLabel, lightLabel) };
