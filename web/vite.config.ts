@@ -4,6 +4,10 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    // The generated schedlab.mjs embeds the WebAssembly binary (about 400 kB); it is the bundle.
+    chunkSizeWarningLimit: 700,
+  },
   server: {
     // The example workloads live in the repository-level examples/ directory, outside web/.
     fs: { allow: [".."] },
