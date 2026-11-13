@@ -58,6 +58,8 @@ endfunction()
 
 schedlab_add_cli_test(cli_t1_fcfs fcfs t1.txt t1_fcfs.expected 0)
 schedlab_add_cli_test(cli_t1_sjf sjf t1.txt t1_sjf.expected 0)
+# Same workload saved with a UTF-8 byte-order mark, as Windows editors do.
+schedlab_add_cli_test(cli_t1_bom fcfs t1_bom.txt t1_fcfs.expected 0)
 schedlab_add_cli_test(cli_t2_fcfs fcfs t2.txt t2_fcfs.expected 0)
 schedlab_add_cli_test(cli_t2_sjf sjf t2.txt t2_sjf.expected 0)
 schedlab_add_cli_test(cli_invalid fcfs invalid.txt invalid.expected 1)

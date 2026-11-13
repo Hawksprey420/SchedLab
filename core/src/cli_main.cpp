@@ -55,7 +55,7 @@ std::optional<T> parse_field(const std::string& token, const char* field, std::s
   if (!value) {
     errors.push_back({index, field,
                       "line " + std::to_string(line_number) + ": " + field +
-                          " is not a base-10 integer that fits in 64 bits: \"" + token + "\""});
+                          " is not a base-10 integer in the supported range: \"" + token + "\""});
   }
   return value;
 }
@@ -85,6 +85,9 @@ std::vector<Process> read_processes(std::istream& input, std::vector<ValidationE
   std::size_t line_number = 0;
   for (std::string line; std::getline(input, line);) {
     ++line_number;
+    // Windows editors often save text files with a UTF-8 byte-order mark; without this
+    // it would become part of the first process ID.
+    if (line_number == 1 && line.rfind("\xEF\xBB\xBF", 0) == 0) line.erase(0, 3);
     if (is_ignorable(line)) continue;
     if (auto process = parse_process_line(line, data_lines, line_number, errors)) {
       processes.push_back(*process);
