@@ -25,8 +25,8 @@ compiled to WebAssembly, React UI with input, validation, Gantt chart and metric
 |---|---|---|
 | Scaffold, plan, agent rules, skills | `feature/core-fcfs-sjf` | merged (PR 1) |
 | C++ core, validation, metrics, CLI, T1-T8 | `feature/core-fcfs-sjf` | merged (PR 1), `954734b` |
-| WASM bridge and parity test | `feature/wasm-bridge` | waiting on Emscripten SDK install |
-| Web UI (P0) | `feature/web-ui` | not started |
+| WASM bridge and parity test | `feature/wasm-bridge` | PR 2 open; Codex review found F1-F3 to fix |
+| Web UI (P0) | `feature/web-ui` | six commits to `186e03e`; unverified |
 
 ## Latest verified result
 
@@ -38,5 +38,4 @@ or Clang.
 
 ## Next action
 
-When `emcc` is available, implement `docs/web-contract.md` (binding, `build-wasm.ps1`,
-parity test) on `feature/wasm-bridge`.
+Handed to Codex on 13 November 2026. Follow `plans/handoff.md` from step 1.
