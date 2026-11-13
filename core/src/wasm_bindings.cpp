@@ -72,7 +72,13 @@ bool read_process(const val& item, std::size_t index, Process& out,
   bool ok = true;
   const val id = item["id"];
   if (id.isString()) {
-    out.id = id.as<std::string>();
+    // Bound the JS string before embind copies it into the WASM heap.
+    if (id["length"].as<double>() > 1024) {
+      errors.push_back({index, "id", "id must be at most 1024 UTF-16 code units"});
+      ok = false;
+    } else {
+      out.id = id.as<std::string>();
+    }
   } else {
     errors.push_back({index, "id", "id must be a string"});
     ok = false;
@@ -180,11 +186,16 @@ bool is_exactly_representable(const schedlab::Schedule& schedule) {
   return schedule.makespan <= schedlab::kMaxExactInteger;
 }
 
-val run_simulation(const val& processes, const std::string& algorithm_id) {
+val run_simulation(const val& processes, const val& algorithm_id) {
   std::vector<ValidationError> errors;
   schedlab::Algorithm algorithm{};
-  if (!parse_algorithm_id(algorithm_id, algorithm)) {
-    errors.push_back(whole_input_error("algorithm", "unknown algorithm \"" + algorithm_id + "\""));
+  if (!algorithm_id.isString()) {
+    errors.push_back(whole_input_error("algorithm", "algorithm must be a string"));
+  } else if (!algorithm_id.strictlyEquals(val("FCFS")) &&
+             !algorithm_id.strictlyEquals(val("SJF_NON_PREEMPTIVE"))) {
+    errors.push_back(whole_input_error("algorithm", "algorithm must be FCFS or SJF_NON_PREEMPTIVE"));
+  } else {
+    parse_algorithm_id(algorithm_id.as<std::string>(), algorithm);
   }
   const std::vector<Process> parsed = read_processes(processes, errors);
   if (errors.empty()) errors = schedlab::validate(parsed);
@@ -198,7 +209,7 @@ val run_simulation(const val& processes, const std::string& algorithm_id) {
   return success(schedule);
 }
 
-val simulate(const val& processes, const std::string& algorithm_id) {
+val simulate(const val& processes, const val& algorithm_id) {
   try {
     return run_simulation(processes, algorithm_id);
   } catch (const std::exception& error) {

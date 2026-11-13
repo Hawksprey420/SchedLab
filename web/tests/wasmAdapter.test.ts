@@ -254,3 +254,32 @@ describe("rejections", () => {
 test("loadWasmAdapter loads the module once", async () => {
   expect(await loadWasmAdapter()).toBe(await loadWasmAdapter());
 });
+
+test("large integer average is exact even when its sum exceeds safe integers", () => {
+  const schedule = expectSchedule(adapter.simulate([
+    proc("A", 0, 9007199254740989), proc("B", 0, 1), proc("C", 0, 1),
+  ], "FCFS"));
+  expect(schedule.averageTurnaround).toBe(9007199254740990);
+});
+
+test.each([null, undefined, 42, false, 1n, [], {}])("rejects non-string algorithm %#", (algorithm) => {
+  const outcome = adapter.simulate([valid], algorithm as Algorithm);
+  expect(outcome).toMatchObject({ ok: false, errors: [
+    { processIndex: null, field: "algorithm" },
+  ] });
+});
+
+test("rejects a huge ID before WASM allocation and remains usable", () => {
+  expect(rejection([proc("x".repeat(3_000_000), 0, 1)])).toEqual([
+    { processIndex: 0, field: "id" },
+  ]);
+  expect(expectSchedule(adapter.simulate([valid], "FCFS")).makespan).toBe(5);
+});
+
+test("ID length boundary uses UTF-16 code units", () => {
+  expect(expectSchedule(adapter.simulate([proc("😀".repeat(512), 0, 1)], "FCFS")).results[0]?.id)
+    .toBe("😀".repeat(512));
+  expect(rejection([proc("x".repeat(1025), 0, 1)])).toEqual([
+    { processIndex: 0, field: "id" },
+  ]);
+});

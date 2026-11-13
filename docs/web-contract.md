@@ -40,6 +40,12 @@ integer inside the destination type's range, and any unknown algorithm name, bef
 builds `schedlab::Process` values. It then calls `validate` and `simulate_single_core`.
 No C++ exception may cross into JavaScript.
 
+The structured binding accepts IDs up to 1024 UTF-16 code units (before trimming).
+Longer IDs return a per-process `id` error before the string is copied into WASM.
+This is a browser-boundary size limit; native core IDs have no length cap. Unknown or
+non-string algorithm values return an `algorithm` error. WASM memory can grow and
+allocation failures throw catchable C++ exceptions rather than deliberately aborting.
+
 `runText` shares its line parser with `schedlab-cli` (one function in the core library),
 so the two cannot drift.
 

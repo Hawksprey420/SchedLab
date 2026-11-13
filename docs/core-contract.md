@@ -94,6 +94,9 @@ nothing eligible, including before the first arrival.
 `turnaround = completion - arrival`, `waiting = start - arrival`, `response = waiting`,
 `average_* = sum / n`, `makespan = max(completion)`.
 
+Average accumulation uses integer quotients and remainders before the final double
+conversion, so aggregate overflow and premature floating-point rounding are avoided.
+
 ## CLI (`schedlab-cli`)
 
 Text in, text out, so the native and WebAssembly builds can be compared byte for byte.

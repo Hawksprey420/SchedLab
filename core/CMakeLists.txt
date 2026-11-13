@@ -46,6 +46,7 @@ if(EMSCRIPTEN)
     -O2
     -sMODULARIZE=1 -sEXPORT_ES6=1 -sSINGLE_FILE=1 -sENVIRONMENT=web,node
     -sEXPORT_NAME=createSchedLabModule
+    -sALLOW_MEMORY_GROWTH=1 -sABORTING_MALLOC=0
     -sFILESYSTEM=0 -sERROR_ON_UNDEFINED_SYMBOLS=1)
   return()  # tests and the CLI are native-only
 endif()
