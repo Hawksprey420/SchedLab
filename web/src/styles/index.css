@@ -1,0 +1,179 @@
+@import "tailwindcss";
+@import "@fontsource/source-serif-4/latin-400.css";
+@import "@fontsource/source-serif-4/latin-600.css";
+@import "@fontsource/source-serif-4/latin-400-italic.css";
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-500.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+@import "./tokens.css";
+
+/* The theme replaces Tailwind's palette: only the tokens of tokens.css exist as colours. */
+@theme {
+  --color-*: initial;
+  --color-current: currentColor;
+  --color-transparent: transparent;
+
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+
+  /* DESIGN.md: radius 2 px on inputs and buttons, 0 on tables and figures. */
+  --radius-*: initial;
+  --radius-control: 2px;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+}
+
+@layer base {
+  html {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    scrollbar-color: var(--ink-muted) var(--surface);
+    scroll-padding-block: 1rem;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Visible on every theme: the accent measures at least 4.5:1 on paper and surface. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  button,
+  input,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  select,
+  input {
+    background-color: var(--paper);
+  }
+
+  button:not(:disabled),
+  label,
+  select {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--on-accent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Gantt chart parts. SVG text and strokes read the same tokens as the rest of the page. */
+  .gantt-text {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gantt-bar {
+    outline: none;
+    cursor: default;
+  }
+
+  .gantt-bar .bar-shape {
+    stroke: var(--ink);
+    stroke-width: 1.25px;
+  }
+
+  .gantt-bar[data-idle="true"] .bar-shape {
+    stroke: var(--ink-muted);
+    stroke-dasharray: 5 4;
+  }
+
+  /* One ring for hover, keyboard focus and a tap, so the three read the same. */
+  .gantt-bar[data-active="true"] .bar-shape {
+    stroke: var(--accent);
+    stroke-width: 3px;
+    stroke-dasharray: none;
+  }
+
+  .bar-label {
+    paint-order: stroke;
+    stroke-width: 3px;
+    stroke-linejoin: round;
+    font-weight: 500;
+    pointer-events: none;
+  }
+
+  /* Results and editor tables share one voice: hairline rules, no boxes. */
+  .data-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    inline-size: 100%;
+  }
+
+  .data-table th,
+  .data-table td {
+    border-block-end: 1px solid var(--rule);
+    padding: 0.4rem 0.75rem;
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .data-table thead th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
+    background-color: var(--surface);
+    border-block-start: 1px solid var(--ink);
+    border-block-end: 1px solid var(--ink);
+    font-weight: 600;
+  }
+
+  /* The first column stays in view while the table scrolls sideways. */
+  .data-table tbody th {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    background-color: var(--paper);
+    text-align: start;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    min-inline-size: 5rem;
+    max-inline-size: 9rem;
+  }
+
+  .data-table thead th:first-child {
+    z-index: 3;
+    inset-inline-start: 0;
+    text-align: start;
+  }
+}

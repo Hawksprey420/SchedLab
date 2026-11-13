@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Applies a stored theme override before first paint so the page does not flash the
+      // wrong scheme. Runs as a classic script on purpose: modules are deferred.
+      try {
+        document.querySelector('meta[name="color-scheme"]').content =
+          localStorage.getItem("color-scheme") ?? "light dark";
+      } catch {}
+    </script>
+    <title>SchedLab</title>
+    <meta name="description" content="A CPU scheduling simulator for FCFS and non-preemptive SJF." />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

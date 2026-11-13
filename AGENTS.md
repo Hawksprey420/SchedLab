@@ -55,6 +55,9 @@ cd web
 npm install
 npm test
 npm run typecheck
+npm run dev          # Vite dev server
+npm run build        # production bundle in web/dist
+npm run test:e2e     # Playwright against the built app (npx playwright install chromium once)
 ```
 
 Git Bash cannot fork on the owner's machine; use PowerShell.

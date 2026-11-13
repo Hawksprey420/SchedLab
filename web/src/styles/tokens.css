@@ -1,0 +1,90 @@
+/*
+ * Design tokens, defined once. Every raw hex value in the app lives in this file.
+ * tests/contrast.test.ts and src/lib/processStyle.ts read these same declarations, so a
+ * measured contrast ratio cannot drift from what the page renders.
+ *
+ * Raw values come first as --<name>-light / --<name>-dark pairs. The semantic tokens below
+ * them (--paper, --ink, ...) pick a side. Colours are chosen by measured WCAG contrast,
+ * not by eye (see DESIGN.md, "Palette").
+ */
+:root {
+  --paper-light: #fffff8;
+  --paper-dark: #151515;
+  --surface-light: #f6f4ea;
+  --surface-dark: #1f1f1d;
+  --ink-light: #111111;
+  --ink-dark: #e8e6dc;
+  --ink-muted-light: #5f5e55;
+  --ink-muted-dark: #a8a69c;
+  /* Vermillion family. #D55E00 itself reaches only 3.85:1 on paper, so the light accent is
+     the darker member of the family that passes 4.5:1 as text and as a button fill. */
+  --accent-light: #b34700;
+  --accent-dark: #ff9a55;
+  --on-accent-light: #fffff8;
+  --on-accent-dark: #151515;
+  --danger-light: #b3261e;
+  --danger-dark: #ff8a80;
+
+  /* Okabe-Ito categorical palette, in the order DESIGN.md assigns it to processes. These are
+     data colours, identical in both themes. */
+  --process-0: #0072b2;
+  --process-1: #e69f00;
+  --process-2: #009e73;
+  --process-3: #cc79a7;
+  --process-4: #56b4e9;
+  --process-5: #d55e00;
+  --process-6: #f0e442;
+
+  /* The two label colours that can be printed on a process bar. The bar picks whichever
+     measures at least 4.5:1 against its fill. */
+  --label-on-light-fill: #111111;
+  --label-on-dark-fill: #fffff8;
+
+  /* Semantic tokens: light is the default (the deliverable is a printed report). */
+  --paper: var(--paper-light);
+  --surface: var(--surface-light);
+  --ink: var(--ink-light);
+  --ink-muted: var(--ink-muted-light);
+  --accent: var(--accent-light);
+  --on-accent: var(--on-accent-light);
+  --danger: var(--danger-light);
+  /* Hairline rules derive from the ink, so they follow the theme without a value of their own. */
+  --rule: color-mix(in srgb, var(--ink) 22%, var(--paper));
+
+  color-scheme: light dark;
+}
+
+/* Fallback for browsers without light-dark(): follow the system preference only. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: var(--paper-dark);
+    --surface: var(--surface-dark);
+    --ink: var(--ink-dark);
+    --ink-muted: var(--ink-muted-dark);
+    --accent: var(--accent-dark);
+    --on-accent: var(--on-accent-dark);
+    --danger: var(--danger-dark);
+  }
+}
+
+/* light-dark() follows the computed color-scheme, so the manual override below works too. */
+@supports (color: light-dark(white, black)) {
+  :root {
+    --paper: light-dark(var(--paper-light), var(--paper-dark));
+    --surface: light-dark(var(--surface-light), var(--surface-dark));
+    --ink: light-dark(var(--ink-light), var(--ink-dark));
+    --ink-muted: light-dark(var(--ink-muted-light), var(--ink-muted-dark));
+    --accent: light-dark(var(--accent-light), var(--accent-dark));
+    --on-accent: light-dark(var(--on-accent-light), var(--on-accent-dark));
+    --danger: light-dark(var(--danger-light), var(--danger-dark));
+  }
+}
+
+/* The theme toggle writes its choice into <meta name="color-scheme">. That tag is only a
+   hint, and the declaration above overrides it, so map it back to the property. */
+:root:has(> head > meta[name="color-scheme"][content="light"]) {
+  color-scheme: light;
+}
+:root:has(> head > meta[name="color-scheme"][content="dark"]) {
+  color-scheme: dark;
+}
