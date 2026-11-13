@@ -18,6 +18,9 @@ endfunction()
 
 add_library(schedlab_core STATIC
   src/validate.cpp
+  src/fcfs.cpp
+  src/metrics.cpp
+  src/scheduler.cpp
 )
 target_include_directories(schedlab_core PUBLIC include)
 schedlab_enable_warnings(schedlab_core)
@@ -31,3 +34,4 @@ function(schedlab_add_test name)
 endfunction()
 
 schedlab_add_test(test_validation)
+schedlab_add_test(test_fcfs)
