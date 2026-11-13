@@ -23,6 +23,7 @@ add_library(schedlab_core STATIC
   src/metrics.cpp
   src/format.cpp
   src/scheduler.cpp
+  src/text_io.cpp
 )
 target_include_directories(schedlab_core PUBLIC include)
 schedlab_enable_warnings(schedlab_core)
@@ -39,6 +40,7 @@ schedlab_add_test(test_validation)
 schedlab_add_test(test_fcfs)
 schedlab_add_test(test_sjf)
 schedlab_add_test(test_metrics)
+schedlab_add_test(test_text_io)
 
 # Command-line front end, also used as the byte-for-byte reference for the WASM build.
 add_executable(schedlab-cli src/cli_main.cpp)
