@@ -45,6 +45,11 @@ test("touch exposes bar details on a phone", async ({ browser }) => {
     await page.getByRole("button", { name: "Run simulation" }).tap();
     await page.locator("[data-bar='1']").tap();
     await expect(page.getByText("P2: begin 8, end 12, duration 4 ticks", { exact: true })).toBeVisible();
+    await page.getByLabel("Example workload").selectOption("cpu-idle");
+    await page.getByRole("button", { name: "Load example" }).tap();
+    await page.getByRole("button", { name: "Run simulation" }).tap();
+    await page.locator("[data-idle='true']").tap();
+    await expect(page.getByText("Idle: begin 1, end 4, duration 3 ticks", { exact: true })).toBeVisible();
   } finally {
     await context.close();
   }

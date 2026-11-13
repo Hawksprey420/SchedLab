@@ -56,6 +56,7 @@ export function GanttBar({
     >
       <rect
         className="bar-shape"
+        pointerEvents="all"
         x={rect.x}
         y={LANE_TOP}
         width={rect.width}

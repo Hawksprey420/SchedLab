@@ -103,6 +103,8 @@ for (const width of [375, 1280]) {
         await expect(idle).toHaveAccessibleName(/idle.*begin 1, end 4/i);
         await expect(idle.locator("text")).toHaveText("idle");
         await expect(idle.locator("rect")).toHaveCSS("stroke-dasharray", "5px, 4px");
+        await idle.hover();
+        await expect(page.getByText("Idle: begin 1, end 4, duration 3 ticks", { exact: true })).toBeVisible();
       }
       for (const [field, value] of [
         ["arrival", "-1"], ["burst", ""], ["id", "P1"], ["id", "IDLE"], ["burst", "1.5"],
