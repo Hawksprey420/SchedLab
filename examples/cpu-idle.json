@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "FCFS",
+  "topology": "SINGLE_CORE",
+  "processes": [
+    {"id": "P1", "arrival": 0, "burst": 1, "priority": 1},
+    {"id": "P2", "arrival": 4, "burst": 2, "priority": 2}
+  ]
+}
