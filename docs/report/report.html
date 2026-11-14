@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SchedLab: CPU Scheduling Algorithm Simulator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* Fonts come from the @fontsource packages already installed under web/node_modules. */
+@font-face{font-family:"Source Serif 4";font-weight:400;font-style:normal;src:url("../../web/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Source Serif 4";font-weight:400;font-style:italic;src:url("../../web/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-italic.woff2") format("woff2")}
+@font-face{font-family:"Source Serif 4";font-weight:600;font-style:normal;src:url("../../web/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"Source Serif 4";font-weight:700;font-style:normal;src:url("../../web/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-700-normal.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Sans";font-weight:400;src:url("../../web/node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Sans";font-weight:600;src:url("../../web/node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-weight:400;src:url("../../web/node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+
+:root{--ink:#161616;--muted:#555548;--rule:#b9b6a6;--plate:#f4f2e6;--accent:#a84300}
+*{box-sizing:border-box}
+html{font-size:10pt}
+p.keep{break-after:avoid}
+body{margin:0;background:#fff;color:var(--ink);font-family:"Source Serif 4",Georgia,"Times New Roman",serif;line-height:1.45;font-variant-numeric:lining-nums;hyphens:manual}
+p{margin:0 0 .6em;orphans:3;widows:3}
+h1,h2,h3{font-weight:600;line-height:1.2;break-after:avoid}
+h1{font-size:25pt;margin:0 0 .15em;font-weight:700}
+h2{font-size:15pt;margin:1.5em 0 .5em;padding-top:.3em;border-top:1px solid var(--ink)}
+h3{font-size:11.5pt;margin:1.1em 0 .3em}
+code,.mono{font-family:"IBM Plex Mono",Consolas,monospace;font-size:.82em}
+ul,ol{margin:.2em 0 .7em 1.3em;padding:0}
+li{margin:.12em 0}
+a{color:inherit;text-decoration:none}
+a.ref{border-bottom:1px dotted var(--muted)}
+
+.title{padding-bottom:.7em;border-bottom:2px solid var(--ink);margin-bottom:.4em}
+.course{font-size:12.5pt;margin:.1em 0}
+.meta{font-family:"IBM Plex Sans",Arial,sans-serif;font-size:9.5pt;color:var(--muted);margin:.1em 0}
+.members{display:inline-block;margin-top:.7em;padding:.3em .7em;border:1.5px dashed var(--accent);font-family:"IBM Plex Sans",Arial,sans-serif;font-size:10pt;font-weight:600;color:var(--accent)}
+
+table{border-collapse:collapse;width:100%;margin:.4em 0 .9em;font-family:"IBM Plex Sans",Arial,sans-serif;font-size:8.8pt;font-variant-numeric:tabular-nums;break-inside:avoid}
+caption{caption-side:top;text-align:left;font-family:"Source Serif 4",Georgia,serif;font-size:9.6pt;margin-bottom:.3em;color:var(--ink)}
+th,td{padding:.28em .5em;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+th{background:var(--plate);border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);font-weight:600}
+tbody tr:last-child td{border-bottom:1px solid var(--ink)}
+td.n,th.n{text-align:right}
+dl.terms{display:grid;grid-template-columns:8.5em 1fr;gap:.15em .8em;margin:.3em 0 .8em;font-size:9.8pt}
+dl.terms dt{font-weight:600}
+dl.terms dd{margin:0}
+
+figure{margin:.7em 0 1.1em;break-inside:avoid}
+figure .imgs{display:block}
+img.shot{display:block;max-width:100%;height:auto;border:1px solid var(--rule);margin-bottom:4px}
+figcaption{margin-top:.35em;font-size:9.4pt;color:var(--ink)}
+figcaption b{font-weight:700}
+.sub{font-family:"IBM Plex Sans",Arial,sans-serif;font-size:8pt;color:var(--muted);margin:.2em 0 0}
+
+.diagram{display:flex;align-items:stretch;gap:0;font-family:"IBM Plex Sans",Arial,sans-serif;font-size:8.6pt;margin:.2em 0}
+.diagram .box{flex:1;border:1px solid var(--ink);padding:.45em .55em;background:var(--plate)}
+.diagram .box b{display:block;margin-bottom:.15em}
+.diagram .arrow{width:1.3em;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.diagram2{margin-top:.4em}
+
+.callout{border-left:3px solid var(--accent);padding:.1em .8em;margin:.6em 0 .9em;background:#fcf8f2}
+.optional{border:1px solid var(--rule);border-left:4px solid var(--muted);padding:.5em .9em .1em;margin:.5em 0 1em}
+.question{margin:1.1em 0 .25em;font-weight:600;break-after:avoid}
+.question span{font-weight:400;font-style:italic}
+.answer p:last-child{margin-bottom:.9em}
+.refs{font-size:9.6pt}
+.refs li{margin:.3em 0;overflow-wrap:anywhere}
+.pagebreak{break-before:page}
+</style>
+</head>
+<body>
+
+<header class="title">
+  <h1>SchedLab: CPU Scheduling Algorithm Simulator</h1>
+  <p class="course">Operating Systems, Final Project</p>
+  <p class="meta">Submission date: 22 November 2026</p>
+  <div class="members">[GROUP MEMBER NAMES]</div>
+</header>
+
+<!-- 1 -->
+<h2>1 Overview</h2>
+<p>SchedLab simulates a single CPU core running a set of processes under two non-preemptive policies: first-come, first-served (FCFS) and shortest job first (SJF). The user enters a process ID, an arrival time, a burst time and a priority for each process, picks an algorithm and presses Run. The program draws a Gantt chart, fills a results table with start, completion, waiting, turnaround and response times, and shows the average waiting time, the average turnaround time and the makespan. All times are integer simulation ticks. They are not measured CPU time.</p>
+
+<h3>Terms used in this report</h3>
+<dl class="terms">
+  <dt>Tick</dt><dd>One integer step of simulated time. A tick has no relation to a millisecond.</dd>
+  <dt>Arrival</dt><dd>The tick at which a process becomes ready to run.</dd>
+  <dt>Burst</dt><dd>The number of ticks of CPU time a process needs. A non-preemptive process uses them in one piece.</dd>
+  <dt>Start, completion</dt><dd>The tick at which a process first gets the CPU, and the tick at which it finishes.</dd>
+  <dt>Waiting</dt><dd>start - arrival: the ticks a process spends ready but not running.</dd>
+  <dt>Turnaround</dt><dd>completion - arrival: the ticks from arriving to finishing.</dd>
+  <dt>Response</dt><dd>start - arrival: the ticks until the first run. It equals waiting here because no process is ever interrupted.</dd>
+  <dt>Makespan</dt><dd>The largest completion time, which is where the Gantt chart ends.</dd>
+  <dt>Idle</dt><dd>A stretch of ticks in which no process has arrived and the CPU has nothing to run.</dd>
+</dl>
+
+<h3>How it is built</h3>
+<p>The scheduling code is written once, in portable C++20 under <code>core/</code>. The same code is used in two ways. The native build produces a console program, <code>schedlab-cli</code>, and the unit tests. Emscripten compiles it to WebAssembly for the browser. A React interface collects the input and draws what the core returns. The interface contains no scheduling code of its own: it calls the core through a small TypeScript interface, <code>SchedulerAdapter</code>.</p>
+
+<figure id="fig-arch">
+  <div class="diagram">
+    <div class="box"><b>React interface</b>Editor, Gantt chart, results table (<code>web/src</code>)</div>
+    <div class="arrow">&rarr;</div>
+    <div class="box"><b>SchedulerAdapter</b>TypeScript interface, no scheduling logic</div>
+    <div class="arrow">&rarr;</div>
+    <div class="box"><b>WebAssembly module</b><code>schedlab.mjs</code>, built from <code>wasm_bindings.cpp</code></div>
+    <div class="arrow">&rarr;</div>
+    <div class="box"><b>C++20 core</b>validate, FCFS, SJF, metrics (<code>core/src</code>)</div>
+  </div>
+  <div class="diagram diagram2">
+    <div class="box"><b>schedlab-cli and CTest executables</b>The same core, compiled natively. Text in, text out.</div>
+  </div>
+  <figcaption>SchedLab architecture. The browser and the console program run the same C++ code.</figcaption>
+</figure>
+
+<p>The browser really runs the same C++ code as the native tests, and a test checks it. <code>web/tests/parity.test.ts</code> sends every fixture in <code>core/tests/cli</code>, plus generated workloads, through both the native <code>schedlab-cli</code> and the WebAssembly text entry point, and requires identical output and exit codes. The test fails, not skips, when the native executable has not been built.</p>
+
+<p>Every run goes through one function. <a class="ref" href="#fig-code-pipeline"></a> shows it. It validates the input, trims the IDs, asks the chosen algorithm only for <em>when</em> each process runs (a list of segments), and then derives every per-process number and the averages from those segments in <code>metrics.cpp</code>. Both algorithms therefore share one set of formulas.</p>
+
+<figure id="fig-code-pipeline">
+  <div class="imgs"><img class="shot" src="img/code-pipeline.png" alt="Source of run_algorithm and simulate_single_core"></div>
+  <figcaption>The entry point. <code>core/src/scheduler.cpp</code>, lines 18 to 36: <code>run_algorithm</code> picks FCFS or SJF, <code>simulate_single_core</code> validates, trims and computes metrics.</figcaption>
+</figure>
+
+<h3>How to run it</h3>
+<p>Prerequisites are Node.js with npm, CMake 3.20 or later and a C++20 compiler. The commands below are from the project <code>README.md</code> and are run in PowerShell from the repository root.</p>
+<pre class="mono" style="font-size:8.6pt;line-height:1.35;margin:.2em 0 .7em;padding:.5em .8em;background:var(--plate);border:1px solid var(--rule);white-space:pre-wrap">cmake -S core -B build/core
+cmake --build build/core --config Release
+Set-Location web
+npm ci
+npm run dev                  # open the local URL that Vite prints
+
+# production build served locally
+npm run build
+npm run preview -- --host 127.0.0.1 --port 4173 --strictPort
+
+# console program (after the cmake build above)
+build\core\Release\schedlab-cli.exe &lt;fcfs|sjf&gt; &lt; input.txt</pre>
+<p>The built app, its fonts, the example workloads and the WebAssembly module are all served locally. No network access is needed once the dependencies are installed.</p>
+
+<!-- 2 -->
+<h2>2 Input and validation</h2>
+<table id="tab-fields">
+  <caption>Input fields. One row per process.</caption>
+  <thead><tr><th>Field</th><th>Meaning</th><th>Accepted values in the editor</th></tr></thead>
+  <tbody>
+    <tr><td>PID</td><td>Process name shown on the chart</td><td>Nonempty after trimming spaces, unique (case-sensitive), not <code>IDLE</code> in any letter case</td></tr>
+    <tr><td>Arrival</td><td>Tick at which the process is ready</td><td>Whole number, 0 to 1,000,000</td></tr>
+    <tr><td>Burst</td><td>Ticks of CPU time needed</td><td>Whole number, 1 to 1,000,000</td></tr>
+    <tr><td>Priority</td><td>Recorded and shown in the results</td><td>Whole number, -1000 to 1000</td></tr>
+  </tbody>
+</table>
+<p>Priority is accepted and kept, but neither FCFS nor SJF uses it to choose a process. The assignment asks for these two algorithms only, and the interface says so next to the table. A test in each algorithm's suite (<code>priority_does_not_change_the_order</code>) confirms that changing priorities leaves the schedule unchanged.</p>
+<p>A schedule contains 1 to 100 processes. The program rejects a missing, negative, fractional or overflowing number with a message that names the field and the value. It never turns an invalid value into a zero. The check happens in two places. The editor checks number format and ranges before it calls the core. The core checks everything again, including the rules that need the whole table: at least one and at most 100 processes, nonempty and unique IDs, no <code>IDLE</code>, and a check that the largest arrival plus the sum of all bursts fits in a 64-bit integer. The core returns every error it finds, not only the first. The editor does not copy the ID and count rules: it shows the core's messages next to the matching field.</p>
+
+<figure id="fig-invalid">
+  <div class="imgs">
+    <img class="shot" src="img/invalid-table.png" alt="Process table with two inline errors">
+    <img class="shot" src="img/invalid-summary.png" alt="Error summary listing two problems">
+    <img class="shot" src="img/invalid-core.png" alt="Error summary for a duplicate process ID">
+  </div>
+  <figcaption>The app rejecting invalid input. Top and middle: arrival -1 in row 1 and burst 2.5 in row 2 are flagged beside their fields and listed in the summary, and no chart or table is drawn. Bottom: after the numbers were corrected, giving process 3 the ID P1 is rejected with the core's own message.</figcaption>
+</figure>
+
+<figure id="fig-code-validate">
+  <div class="imgs"><img class="shot" src="img/code-validate.png" alt="Source of validate"></div>
+  <figcaption>The public check. <code>core/src/validate.cpp</code>, lines 95 to 109: <code>validate</code> collects every error before returning.</figcaption>
+</figure>
+
+<!-- 3 -->
+<h2>3 First-come, first-served (FCFS)</h2>
+<p><b>Rule.</b> The CPU runs processes in the order they arrive. If two processes arrive at the same tick, the one listed first in the table runs first. Each process runs to completion. If the next process has not arrived when the CPU becomes free, the CPU idles until it does.</p>
+<p><b>How the code does it.</b> <code>indices_by_arrival</code> (<a class="ref" href="#fig-code-fcfs-order"></a>) builds a list of process positions and sorts it with <code>std::stable_sort</code> on arrival only. A stable sort keeps the input order for equal arrivals, which is exactly the tie-break. <code>fcfs_segments</code> (<a class="ref" href="#fig-code-fcfs"></a>) then visits the processes in that order with a clock <code>now</code>. If <code>process.arrival &gt; now</code> it records an idle segment and moves the clock forward. It then records the process's run segment and advances the clock by the burst.</p>
+
+<figure id="fig-code-fcfs-order">
+  <div class="imgs"><img class="shot" src="img/code-fcfs-order.png" alt="Source of indices_by_arrival"></div>
+  <figcaption><code>core/src/fcfs.cpp</code>, lines 9 to 18: <code>indices_by_arrival</code> orders by arrival and keeps input order for ties.</figcaption>
+</figure>
+<figure id="fig-code-fcfs">
+  <div class="imgs"><img class="shot" src="img/code-fcfs.png" alt="Source of fcfs_segments"></div>
+  <figcaption><code>core/src/fcfs.cpp</code>, lines 22 to 42: <code>fcfs_segments</code>, the FCFS algorithm.</figcaption>
+</figure>
+
+<p class="keep"><b>Walk-through with T1.</b> T1 has three processes that all arrive at tick 0: P1 (burst 8), P2 (burst 4) and P3 (burst 2), listed in that order. The arrivals are equal, so the stable sort leaves the order P1, P2, P3.</p>
+<table id="tab-fcfs-walk">
+  <caption>FCFS on T1, one loop pass per row. Times in ticks.</caption>
+  <thead><tr><th>Pass</th><th class="n">now before</th><th>Next in order</th><th>arrival &gt; now?</th><th>Segment recorded</th><th class="n">now after</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td class="n">0</td><td>P1 (arrival 0, burst 8)</td><td>no</td><td>P1 [0, 8)</td><td class="n">8</td></tr>
+    <tr><td>2</td><td class="n">8</td><td>P2 (arrival 0, burst 4)</td><td>no</td><td>P2 [8, 12)</td><td class="n">12</td></tr>
+    <tr><td>3</td><td class="n">12</td><td>P3 (arrival 0, burst 2)</td><td>no</td><td>P3 [12, 14)</td><td class="n">14</td></tr>
+  </tbody>
+</table>
+<p>Segments are half-open: [8, 12) means the process runs during ticks 8 to 11 and finishes at tick 12. The metrics follow from the segments: P1 waits 0, P2 waits 8 and P3 waits 12, so the average waiting time is 20 / 3 = 6.67 ticks. Turnaround times are 8, 12 and 14, which gives 34 / 3 = 11.33 ticks. The application output for T1 is in <a class="ref" href="#fig-t1-fcfs"></a>.</p>
+<p><b>Idle time.</b> With P1 (arrival 0, burst 1) and P2 (arrival 4, burst 2), the clock is 1 when P2 is next. Since 4 &gt; 1, the code records an idle segment [1, 4) and moves the clock to 4. P2 then runs [4, 6) with waiting time 0. See <a class="ref" href="#fig-idle"></a>.</p>
+
+<!-- 4 -->
+<h2>4 Shortest job first, non-preemptive (SJF)</h2>
+<p><b>Rule.</b> Whenever the CPU is free, SJF looks only at processes that have already arrived and picks the one with the shortest burst. Ties go to the earlier arrival, then to the process listed first. The chosen process runs to completion. A shorter process that arrives meanwhile has to wait: this variant never interrupts the running process. If no process has arrived, the CPU idles until the earliest arrival.</p>
+<p><b>How the code does it.</b> SJF cannot be written as one sort, because the set of eligible processes depends on the clock. <code>sjf_segments</code> (<a class="ref" href="#fig-code-sjf"></a>) therefore loops once per process: it asks <code>pick_shortest_job</code> for the best eligible process at time <code>now</code>, and if there is none it jumps the clock to <code>earliest_unfinished_arrival</code> and records an idle segment. It then records the run, advances the clock and marks the process finished. <code>is_shorter_job</code> compares burst, then arrival. The last tie-break, input order, comes from how <code>pick_shortest_job</code> scans: it walks the table in input order and replaces its current choice only when a process is strictly better (<a class="ref" href="#fig-code-sjf-pick"></a>). Selection is O(n<sup>2</sup>), which is fine for at most 100 processes.</p>
+
+<figure id="fig-code-sjf-pick">
+  <div class="imgs"><img class="shot" src="img/code-sjf-pick.png" alt="Source of is_shorter_job, pick_shortest_job and earliest_unfinished_arrival"></div>
+  <figcaption><code>core/src/sjf.cpp</code>, lines 10 to 38: <code>is_shorter_job</code>, <code>pick_shortest_job</code> and <code>earliest_unfinished_arrival</code>.</figcaption>
+</figure>
+<figure id="fig-code-sjf">
+  <div class="imgs"><img class="shot" src="img/code-sjf.png" alt="Source of sjf_segments"></div>
+  <figcaption><code>core/src/sjf.cpp</code>, lines 42 to 69: <code>sjf_segments</code>, the SJF algorithm.</figcaption>
+</figure>
+
+<p class="keep"><b>Walk-through with T2, which shows non-preemption.</b> T2 is P1 (arrival 0, burst 8), P2 (arrival 1, burst 4) and P3 (arrival 2, burst 2).</p>
+<table id="tab-sjf-walk">
+  <caption>SJF on T2, one loop pass per row. Times in ticks.</caption>
+  <thead><tr><th>Pass</th><th class="n">now</th><th>Arrived and unfinished</th><th>Chosen</th><th>Segment recorded</th><th class="n">now after</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td class="n">0</td><td>P1</td><td>P1</td><td>P1 [0, 8)</td><td class="n">8</td></tr>
+    <tr><td>2</td><td class="n">8</td><td>P2 (burst 4), P3 (burst 2)</td><td>P3, the shorter</td><td>P3 [8, 10)</td><td class="n">10</td></tr>
+    <tr><td>3</td><td class="n">10</td><td>P2</td><td>P2</td><td>P2 [10, 14)</td><td class="n">14</td></tr>
+  </tbody>
+</table>
+<p>P2 arrives at tick 1 and P3 at tick 2, both while P1 is running. P3's burst of 2 is shorter than the 6 ticks P1 still needs, but P1 keeps the CPU until tick 8. Only then does SJF compare P2 and P3. Waiting times are 0 (P1), 9 (P2) and 6 (P3): the average waiting time is 15 / 3 = 5.00 ticks and the average turnaround time is 29 / 3 = 9.67 ticks. The application output is in <a class="ref" href="#fig-t2-sjf"></a>. For comparison, FCFS on the same workload gives 5.67 and 10.33 (<a class="ref" href="#fig-t2-fcfs"></a>).</p>
+
+<!-- 5 -->
+<h2>5 Metrics</h2>
+<p>Every number in the results table is derived from the segments an algorithm produced, using these formulas for each process:</p>
+<ul>
+  <li>start and completion: the begin and end of the process's run segment</li>
+  <li>waiting = start - arrival</li>
+  <li>turnaround = completion - arrival</li>
+  <li>response = start - arrival, which equals waiting because the process is never interrupted</li>
+</ul>
+<p>For n processes: average waiting = (sum of waiting) / n, average turnaround = (sum of turnaround) / n, and makespan = the largest completion time. <code>record_start_and_completion</code> copies each run segment's begin and end into the matching process, and <code>derive_waiting_turnaround_response</code> applies the three formulas (<a class="ref" href="#fig-code-metrics-derive"></a>). <code>compute_schedule_metrics</code> sums them and returns the averages and the makespan (<a class="ref" href="#fig-code-metrics"></a>).</p>
+<p>The averages are not computed with a plain floating-point sum. <code>compute_schedule_metrics</code> adds up integer quotients and remainders of each value divided by n, and <code>average</code> (same file, lines 49 to 64) converts once at the end. This avoids overflow of the total and rounding drift for very large times. For the small workloads in this report the result is the ordinary quotient. The app shows two decimals and <code>schedlab-cli</code> shows four.</p>
+
+<figure id="fig-code-metrics-derive">
+  <div class="imgs"><img class="shot" src="img/code-metrics-derive.png" alt="Source of record_start_and_completion and derive_waiting_turnaround_response"></div>
+  <figcaption><code>core/src/metrics.cpp</code>, lines 23 to 47: <code>record_start_and_completion</code> and <code>derive_waiting_turnaround_response</code> (the three formulas).</figcaption>
+</figure>
+<figure id="fig-code-metrics">
+  <div class="imgs"><img class="shot" src="img/code-metrics.png" alt="Source of compute_schedule_metrics"></div>
+  <figcaption><code>core/src/metrics.cpp</code>, lines 68 to 93: <code>compute_schedule_metrics</code> returns results, averages and makespan.</figcaption>
+</figure>
+
+<p class="keep"><b>Worked example: T2 under SJF.</b> The schedule from the walk-through is P1 [0, 8), P3 [8, 10), P2 [10, 14).</p>
+<table id="tab-worked">
+  <caption>Metrics for T2 under SJF. Times in ticks. These are the values the app shows in <a class="ref" href="#fig-t2-sjf"></a>.</caption>
+  <thead><tr><th>PID</th><th class="n">Arrival</th><th class="n">Burst</th><th class="n">Start</th><th class="n">Completion</th><th class="n">Waiting = start - arrival</th><th class="n">Turnaround = completion - arrival</th><th class="n">Response</th></tr></thead>
+  <tbody>
+    <tr><td>P1</td><td class="n">0</td><td class="n">8</td><td class="n">0</td><td class="n">8</td><td class="n">0 - 0 = 0</td><td class="n">8 - 0 = 8</td><td class="n">0</td></tr>
+    <tr><td>P2</td><td class="n">1</td><td class="n">4</td><td class="n">10</td><td class="n">14</td><td class="n">10 - 1 = 9</td><td class="n">14 - 1 = 13</td><td class="n">9</td></tr>
+    <tr><td>P3</td><td class="n">2</td><td class="n">2</td><td class="n">8</td><td class="n">10</td><td class="n">8 - 2 = 6</td><td class="n">10 - 2 = 8</td><td class="n">6</td></tr>
+    <tr><td><b>Sum</b></td><td></td><td></td><td></td><td></td><td class="n"><b>15</b></td><td class="n"><b>29</b></td><td></td></tr>
+  </tbody>
+</table>
+<p>Average waiting = 15 / 3 = 5.00 ticks. Average turnaround = 29 / 3 = 9.67 ticks (9.6667 in the console output). Makespan = 14 ticks, the completion time of P2.</p>
+
+<!-- 6 -->
+<h2>6 Program output</h2>
+<p>The figures below are screenshots of the running application (the production build, Chromium, light theme), captured by the report's build script. Each figure shows the Gantt chart with its caption, then the results table and the averages, as two crops of the same page (the text list that repeats the chart is left out). The captions printed inside the screenshots (Figure 1, Table 1) are the app's own numbering, not this report's. Where a workload is not obvious from the chart, its table is shown first. <a class="ref" href="#tab-compare"></a> gathers the averages.</p>
+
+<figure id="fig-t1-fcfs">
+  <div class="imgs">
+    <img class="shot" src="img/workload-t1.png" alt="Workload T1">
+    <img class="shot" src="img/out-t1-fcfs-chart.png" alt="T1 under FCFS, Gantt chart"><img class="shot" src="img/out-t1-fcfs-results.png" alt="T1 under FCFS, results">
+  </div>
+  <figcaption>T1, P1 (0, 8), P2 (0, 4), P3 (0, 2), under FCFS. Expected and shown: order P1, P2, P3; waiting 0, 8, 12; average waiting 6.67 and average turnaround 11.33 ticks; makespan 14.</figcaption>
+</figure>
+<figure id="fig-t1-sjf">
+  <div class="imgs"><img class="shot" src="img/out-t1-sjf-chart.png" alt="T1 under SJF, Gantt chart"><img class="shot" src="img/out-t1-sjf-results.png" alt="T1 under SJF, results"></div>
+  <figcaption>T1 under SJF. Expected and shown: order P3, P2, P1; waiting 6, 2, 0; average waiting 2.67 and average turnaround 7.33 ticks; makespan 14.</figcaption>
+</figure>
+<figure id="fig-t2-fcfs">
+  <div class="imgs">
+    <img class="shot" src="img/workload-t2.png" alt="Workload T2">
+    <img class="shot" src="img/out-t2-fcfs-chart.png" alt="T2 under FCFS, Gantt chart"><img class="shot" src="img/out-t2-fcfs-results.png" alt="T2 under FCFS, results">
+  </div>
+  <figcaption>T2, P1 (0, 8), P2 (1, 4), P3 (2, 2), under FCFS. Expected and shown: order P1, P2, P3; waiting 0, 7, 10; average waiting 5.67 and average turnaround 10.33 ticks; makespan 14.</figcaption>
+</figure>
+<figure id="fig-t2-sjf">
+  <div class="imgs"><img class="shot" src="img/out-t2-sjf-chart.png" alt="T2 under SJF, Gantt chart"><img class="shot" src="img/out-t2-sjf-results.png" alt="T2 under SJF, results"></div>
+  <figcaption>T2 under SJF. Expected and shown: P1 keeps the CPU when the shorter P3 arrives, so the order is P1, P3, P2; waiting 0, 9, 6; average waiting 5.00 and average turnaround 9.67 ticks; makespan 14.</figcaption>
+</figure>
+<figure id="fig-idle">
+  <div class="imgs">
+    <img class="shot" src="img/workload-idle.png" alt="Workload with a CPU idle gap">
+    <img class="shot" src="img/out-idle-fcfs-chart.png" alt="Idle case under FCFS, Gantt chart"><img class="shot" src="img/out-idle-fcfs-results.png" alt="Idle case under FCFS, results">
+  </div>
+  <figcaption>CPU-idle case, P1 (0, 1) and P2 (4, 2), under FCFS. Expected and shown: P1 [0, 1), idle [1, 4), P2 [4, 6); waiting 0 and 0; average waiting 0.00 and average turnaround 1.50 ticks; makespan 6. SJF produces the same schedule for this workload.</figcaption>
+</figure>
+
+<h3>Console program</h3>
+<p><code>schedlab-cli</code> reads one process per line (<code>id arrival burst priority</code>; blank lines and lines starting with <code>#</code> are ignored) and prints segments, per-process results, averages with four decimals and the makespan. <a class="ref" href="#fig-cli"></a> is the output of the real executable for T2 under SJF. It matches the fixture <code>core/tests/cli/t2_sjf.expected</code>, and the values match <a class="ref" href="#fig-t2-sjf"></a>.</p>
+<figure id="fig-cli">
+  <div class="imgs"><img class="shot" src="img/cli-t2-sjf.png" alt="Console output of schedlab-cli for T2 under SJF"></div>
+  <figcaption>Console output for T2 under SJF, from <code>build\core\Release\schedlab-cli.exe</code> with the input file shown above the output.</figcaption>
+</figure>
+
+<table id="tab-compare">
+  <caption>FCFS and SJF compared on the test cases. Times in ticks.</caption>
+  <thead><tr><th>Workload</th><th>Algorithm</th><th>Run order</th><th class="n">Average waiting</th><th class="n">Average turnaround</th><th class="n">Makespan</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="2">T1: P1 (0, 8), P2 (0, 4), P3 (0, 2)</td><td>FCFS</td><td>P1, P2, P3</td><td class="n">6.67</td><td class="n">11.33</td><td class="n">14</td></tr>
+    <tr><td>SJF</td><td>P3, P2, P1</td><td class="n">2.67</td><td class="n">7.33</td><td class="n">14</td></tr>
+    <tr><td rowspan="2">T2: P1 (0, 8), P2 (1, 4), P3 (2, 2)</td><td>FCFS</td><td>P1, P2, P3</td><td class="n">5.67</td><td class="n">10.33</td><td class="n">14</td></tr>
+    <tr><td>SJF</td><td>P1, P3, P2</td><td class="n">5.00</td><td class="n">9.67</td><td class="n">14</td></tr>
+    <tr><td>Idle case: P1 (0, 1), P2 (4, 2)</td><td>FCFS and SJF</td><td>P1, idle, P2</td><td class="n">0.00</td><td class="n">1.50</td><td class="n">6</td></tr>
+  </tbody>
+</table>
+
+<!-- 7 -->
+<h2>7 Testing</h2>
+<p>The suites below were run for this report on 14 November 2026, on Windows 11 with PowerShell, Node 22.22.3 and Playwright 1.65.0 (Chromium). The counts are what the tools printed in that run.</p>
+<table id="tab-tests">
+  <caption>Test runs.</caption>
+  <thead><tr><th>Suite</th><th>Command</th><th>Result</th></tr></thead>
+  <tbody>
+    <tr><td>Core, native C++</td><td><code>ctest --test-dir build/core --output-on-failure -C Release</code></td><td>15 of 15 passed</td></tr>
+    <tr><td>Windows tool, native C++ (optional extra)</td><td><code>ctest --test-dir build/intel --output-on-failure -C Release</code></td><td>9 of 9 passed</td></tr>
+    <tr><td>Web unit and native/WebAssembly parity tests</td><td><code>npm test</code> in <code>web/</code></td><td>772 tests passed, 17 test files</td></tr>
+    <tr><td>TypeScript type check</td><td><code>npm run typecheck</code> in <code>web/</code></td><td>exit code 0, no errors</td></tr>
+    <tr><td>Browser end-to-end tests</td><td><code>npm run test:e2e</code> in <code>web/</code></td><td>22 passed (Chromium)</td></tr>
+  </tbody>
+</table>
+<p><b>What the tests cover.</b> The core suites assert the exact segments, per-process metrics and averages for T1 and T2 under both algorithms, an idle gap at the start and between jobs, identical processes keeping input order, a single job, unsorted input, priority having no effect on the order, and tie-breaking by burst, then arrival, then input order. They also check every validation rule and its message, metric invariants on generated workloads (completion at least start at least arrival, waiting not negative, no overlapping segments, every process exactly once) and averages near the 64-bit limits. Seven <code>schedlab-cli</code> cases compare the console output against stored expected files, including malformed and invalid input. The parity test compares native and WebAssembly output text. The browser tests run T1 and T2 under both algorithms at 375 and 1280 pixel widths in both themes, and check malformed input, undo, keyboard use, offline loading (all external requests blocked), 100 processes with a makespan of 100,000,000 ticks, the optional simulation and the native-trace import.</p>
+<p><b>Not verified.</b> Firefox and Safari were not tested, only Chromium. Physical touch devices and screen-reader speech output were not tested. The optional axe-core accessibility audit was not run, so the accessibility checks do not establish full conformance. The WebAssembly module was not rebuilt for this report; the committed module is the one exercised by the parity and browser tests. For the optional Windows tool, console Ctrl+C delivery was not driven by hand (the worker cancellation itself is tested), failures of every Win32 call were not injected, and the single-class branch was only tested with a fake topology because the test machine has two classes. The measurements are described in Section 8 with their limits. Nothing was deployed.</p>
+
+<!-- 8 -->
+<h2>8 Optional extensions</h2>
+<div class="optional">
+<p><b>These two extras are optional and educational.</b> They are not part of the graded FCFS and SJF simulator, which stays the default. Neither one changes how FCFS or SJF work.</p>
+</div>
+
+<h3>8.1 Simulated multi-core mode</h3>
+<p>Below the graded simulator, a Topology control switches from one core to an Intel-style layout (6 P-cores and 4 E-cores, ten lanes) or an Arm-style layout (1 Prime, 3 Big and 4 LITTLE cores, eight lanes). The queue policy (FCFS or SJF) chooses which ready process goes next, and a separate placement heuristic chooses an idle lane. In this mode burst is read as work units, and a process runs for ceil(work / lane rate) ticks. The results carry the labels <code>SIMULATED</code> and <code>Experimental / simplified model</code>.</p>
+<ul>
+  <li>The Intel layout has ten lanes because the CPU it imitates has 10 physical cores. The real i7-12650H shows 16 logical processors because its six P-cores run two threads each (SMT). The model does not draw 16 independent cores.</li>
+  <li>The work rates (P-core 2, E-core 1) and energy units per tick (P-core 3, E-core 1) are fictional teaching values. They are not measurements of any CPU.</li>
+  <li>The energy index is busy ticks multiplied by the assumed energy units per tick. It is an abstract number, not watts, joules or battery use.</li>
+</ul>
+<p>For T1 under FCFS, the default placement (first available lane by ID order, which puts E before P) gives an energy index of 14 and a makespan of 8 ticks. Placing on the fastest available lane gives the layout in <a class="ref" href="#fig-hybrid"></a>: P1, P2 and P3 run on three P-core lanes, the makespan is 4 ticks and the energy index is 21. Faster lanes finish sooner and cost more of the assumed energy units. The values are only as meaningful as the invented rates.</p>
+<figure id="fig-hybrid">
+  <div class="imgs"><img class="shot" src="img/hybrid-intel.png" alt="Intel-style ten-lane Gantt chart"></div>
+  <figcaption>Simulated Intel-style mode, T1 under FCFS with the fastest-available placement. Ten lanes, P0 to P5 and E0 to E3. Makespan 4 ticks, energy index 21 (abstract units).</figcaption>
+</figure>
+
+<h3>8.2 Native Windows CPU Sets tool</h3>
+<p>The separate program <code>native/windows-intel</code> (<code>schedlab-intel.exe</code>) is a Windows-only C++ tool. It lists the processor classes Windows reports, and on request runs one bounded compute workload on a single worker thread while asking Windows to confine that thread to the highest or lowest efficiency class (CPU Sets). It writes a JSON file. The web app imports such a file locally, with no upload, and shows it in a separate <b>Native measured</b> panel in milliseconds. These are real measurements, not FCFS or SJF results, and they are never drawn on the tick axis.</p>
+<p>The committed sample traces were collected on 14 November 2026 on a 12th Gen Intel Core i7-12650H, active power plan Balanced, with one warm-up run and three measured runs of 400,000,000 integer iterations. Every run produced the checksum 51001733377.</p>
+<table id="tab-native">
+  <caption>Measured runs from the committed sample traces under <code>examples/</code>. Times in milliseconds.</caption>
+  <thead><tr><th>Requested class</th><th class="n">Run 1</th><th class="n">Run 2</th><th class="n">Run 3</th><th class="n">Median</th><th class="n">Min to max</th><th>Samples seen in requested class (per run, of 382)</th></tr></thead>
+  <tbody>
+    <tr><td>performance</td><td class="n">678.4595</td><td class="n">668.6926</td><td class="n">689.6459</td><td class="n">678.4595</td><td class="n">668.6926 to 689.6459</td><td>382, 382, 382</td></tr>
+    <tr><td>efficient</td><td class="n">838.2289</td><td class="n">795.0416</td><td class="n">828.3228</td><td class="n">828.3228</td><td class="n">795.0416 to 838.2289</td><td>365, 310, 365</td></tr>
+  </tbody>
+</table>
+<figure id="fig-native">
+  <div class="imgs"><img class="shot" src="img/native-measured.png" alt="Native measured panel with the efficient-class sample"></div>
+  <figcaption>The Native measured panel with the bundled efficient-class sample. The app warns that some observations were outside the requested class.</figcaption>
+</figure>
+<p>The app rounds to two decimals: it shows medians of 678.46 ms (performance request) and 828.32 ms (efficient request).</p>
+<p><b>Caveats.</b> The efficient-class request was observed in the requested class in only 365, 310 and 365 of 382 samples per run, so those timings include time on other classes. The two medians are therefore not an isolated P-core to E-core speed ratio, and the report makes no such claim. Other limits:</p>
+<ul>
+  <li>CPU Sets are a scheduling constraint, not hardware isolation. Windows policy, core parking, SMT siblings and other processes still affect where the thread runs.</li>
+  <li>The runs used the Balanced power plan, and the tool does not change power settings. Background load, temperature, frequency and power limits were not controlled.</li>
+  <li>There is one workload on one machine, with three repeats. The samples are not predictions for other computers.</li>
+  <li>Processor classes are discovered at run time from the class Windows reports. Intel Thread Director was neither read nor reimplemented.</li>
+</ul>
+
+<!-- 9 -->
+<h2>9 Conclusion questions</h2>
+<!-- NOTE FOR THE GROUP: please revise these five answers into your own words before you submit. Keep the numbers; they come from the program's output. Question 3 in particular is a personal reflection and should describe your own experience. -->
+
+<p class="question">1. Among the scheduling algorithms you implemented (FCFS, SJF), which one performed the best in terms of average waiting time and turnaround time? Explain why.</p>
+<div class="answer" id="q1">
+<p>SJF was better on both measures in both test cases. In T1 all three processes arrive at tick 0, and only the order differs. FCFS runs P1, P2, P3 and gives an average waiting time of 6.67 ticks and an average turnaround of 11.33 ticks. SJF runs P3, P2, P1 and gives 2.67 and 7.33.</p>
+<p>The reason is simple arithmetic. A process waits for every job placed before it, so the burst of the first job is counted as waiting by everyone behind it. FCFS puts the 8-tick P1 first, and both P2 and P3 pay for it (waiting 8 and 12). SJF puts it last, so no one waits for it, and the small bursts are the only ones counted repeatedly. The total work is the same: both finish at tick 14.</p>
+<p>In T2 the gain is smaller, 5.67 against 5.00 waiting and 10.33 against 9.67 turnaround, because P1 was the only process at tick 0 and could not be interrupted. SJF is also not better for everyone: P2 waits 9 ticks under SJF and 7 under FCFS. Our simulator is told every burst in advance. A real operating system usually is not.</p>
+</div>
+
+<p class="question">2. How does the arrival time of processes affect the fairness and efficiency of each scheduling algorithm? Provide an example based on your test cases.</p>
+<div class="answer" id="q2">
+<p>Arrival time decides which processes are ready when the CPU becomes free, so it shapes both algorithms. FCFS looks only at arrival, so nobody is overtaken, but a late short job still pays for early long ones. In T2, P3 arrives at tick 2 with a burst of 2 and waits 10 ticks behind P1 and P2, the longest wait under FCFS.</p>
+<p>SJF depends on arrival more. At tick 0 only P1 was ready, so SJF had no choice, and because it is non-preemptive P1 kept the CPU until tick 8 although P3 arrived at tick 2. At tick 8 it compared P2 and P3 and picked P3. P3's wait fell from 10 to 6 while P2's rose from 7 to 9. The SJF advantage in average waiting time shrank from 4.00 ticks in T1 (6.67 to 2.67) to 0.67 in T2 (5.67 to 5.00).</p>
+<p>Arrival also decides whether the CPU idles. With P1 (0, 1) and P2 (4, 2) the CPU is idle during [1, 4) under both algorithms, because nothing has arrived. The makespan is 6 ticks with 3 busy ticks, and both give average waiting 0.00 and turnaround 1.50. When no choice exists, the policies are the same, and CPU use is set by the arrivals, not the algorithm.</p>
+</div>
+
+<p class="question">3. Which algorithm was the most challenging to implement and why? What concept or logic made it difficult?</p>
+<div class="answer" id="q3">
+<p>SJF was harder than FCFS. FCFS is one stable sort by arrival followed by a single pass with a clock. SJF cannot be a sort, because the set of eligible processes changes as the clock moves. The code has to pick, run, advance the clock and pick again, and several details have to be right together.</p>
+<p>First, the idle jump. When nothing has arrived, the clock must move to the earliest unfinished arrival and an idle segment must be recorded, otherwise the loop has nothing to choose. Second, tie-breaking: equal bursts go to the earlier arrival, then to the process listed first. We get the last rule by scanning in input order and replacing the best choice only when a process is strictly better. Third, non-preemption. The scheduler must not look again when a shorter process arrives mid-run, and T2 exists to pin that behavior down.</p>
+<p>The hardest engineering part overall was not an algorithm, though. It was keeping the native build and the WebAssembly build identical. JavaScript numbers are doubles, so the binding limits integers to the safe range, and the average is computed from integer quotients and remainders to keep it exact. A parity test compares both outputs as text, so a drift in either build fails a test.</p>
+</div>
+
+<p class="question">4. If you were to improve your simulator, what additional features or enhancements would you add to make it more useful or realistic for OS learning?</p>
+<div class="answer" id="q4">
+<p>The first addition would be the algorithms the assignment leaves out: preemptive shortest remaining time first, round robin with a chosen time quantum, and priority scheduling that finally uses the priority field, which is now recorded but ignored. T2 shows why. SJF cannot let P3 run at tick 2, and a preemptive variant could. Putting both on one chart would let a student see what preemption buys and what it costs.</p>
+<p>Second, a step-by-step playback and a side-by-side comparison panel. Today a student switches algorithms and compares two screens by eye, as in the table in Section 6. A synchronized view would make convoy effects and ordering differences visible at a glance.</p>
+<p>Third, more realism. Processes could alternate CPU and I/O bursts, and a context-switch cost could be charged, because both change which policy wins. A random workload generator, CSV export of results and extra metrics such as CPU utilization, throughput and the largest single wait would help with larger experiments. Finally, the optional multi-core mode could take its work rates from imported native measurements, once those are taken under cleaner conditions, instead of invented numbers.</p>
+</div>
+
+<p class="question">5. How does simulating CPU scheduling help you understand real-world operating system behavior? Give at least two insights you gained from this project.</p>
+<div class="answer" id="q5">
+<p>The first insight is the convoy effect. In T1 under FCFS, P3 needs only 2 ticks but waits 12 behind the 8-tick P1 and the 4-tick P2. Changing nothing but the order cut the average waiting time from 6.67 to 2.67 ticks, and the total work and makespan (14 ticks) stayed the same. A scheduler changes how long users wait without making the machine any faster.</p>
+<p>The second is that every policy needs information or gives something up. SJF wins on averages but needs the burst time before the job runs, which a real kernel does not know, and T2 shows a late short job waiting behind a long one when the CPU cannot be taken back.</p>
+<p>The third came from the native experiment. The textbook models assume identical cores and an ideal CPU. On the Intel laptop, Windows reports processor classes, and a CPU Set request is only a constraint. For the efficient class, the requested class was seen in only 365, 310 and 365 of 382 samples per run, with the Balanced power plan and background load uncontrolled. Real scheduling also involves topology, power policy and competing processes, which the simulator leaves out. That is why the measured milliseconds are kept apart from the simulated ticks.</p>
+</div>
+
+<!-- 10 -->
+<h2>10 References</h2>
+<ul class="refs">
+  <li>Instructor's assignment brief, <i>Final Project OS</i> (Operating Systems final project, two pages). The brief is not part of the public repository.</li>
+  <li>Intel Core i7-12650H processor specifications: https://www.intel.com/content/www/us/en/products/sku/226066/intel-core-i712650h-processor-24m-cache-up-to-4-70-ghz/specifications.html</li>
+  <li>Intel Thread Director overview: https://www.intel.com/content/www/us/en/support/articles/000097053/processors/intel-core-processors.html</li>
+  <li>Microsoft, GetSystemCpuSetInformation: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getsystemcpusetinformation</li>
+  <li>Microsoft, SYSTEM_CPU_SET_INFORMATION and EfficiencyClass: https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-system_cpu_set_information</li>
+  <li>Microsoft, SetThreadSelectedCpuSets: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreadselectedcpusets</li>
+  <li>Microsoft, CPU Sets behavior and caveats: https://learn.microsoft.com/en-us/windows/win32/procthread/cpu-sets</li>
+  <li>SchedLab project documents in the repository: <code>plan.md</code>, <code>docs/core-contract.md</code>, <code>docs/web-contract.md</code>, <code>docs/hybrid-contract.md</code>, <code>docs/hardware-assumptions.md</code> and <code>docs/extension-verification.md</code>.</li>
+</ul>
+
+<script>
+// Numbers figures and tables in document order, then resolves cross-references and sizes
+// screenshots at one fixed scale (captured at 2x, shown at 0.21 mm per captured CSS pixel).
+(function () {
+  var counts = { fig: 0, tab: 0 };
+  var labels = {};
+  document.querySelectorAll("figure[id], table[id]").forEach(function (el) {
+    var kind = el.tagName === "FIGURE" ? "fig" : "tab";
+    counts[kind] += 1;
+    var word = kind === "fig" ? "Figure " : "Table ";
+    labels[el.id] = word + counts[kind];
+    var cap = el.querySelector(kind === "fig" ? "figcaption" : "caption");
+    if (cap) cap.insertAdjacentHTML("afterbegin", "<b>" + word + counts[kind] + ".</b> ");
+  });
+  document.querySelectorAll("a.ref").forEach(function (a) {
+    var id = a.getAttribute("href").slice(1);
+    if (!labels[id]) throw new Error("unknown reference " + id);
+    a.textContent = labels[id];
+  });
+  function size(img) {
+    var perPixel = /\/(code|cli)-/.test(img.getAttribute("src")) ? 0.2 : 0.17;
+    img.style.width = (img.naturalWidth / 2) * perPixel + "mm";
+  }
+  document.querySelectorAll("img.shot").forEach(function (img) {
+    if (img.complete) size(img); else img.addEventListener("load", function () { size(img); });
+  });
+})();
+</script>
+</body>
+</html>
