@@ -17,5 +17,9 @@ int main() {
   CHECK(select_class({sets[0], sets[4]}, "performance").empty());
   CHECK(select_class({sets[0], sets[3]}, "efficient").empty());
   rejects([&] { select_class(sets, "unknown"); });
+  const std::vector<CpuSet> sampling_topology{
+    {1, 0, 0, 0, 10}, {2, 1, 0, 0, 2}, {3, 0, 1, 1, 10, false, true, false}};
+  CHECK(class_sample_count({{0, 0, 4}, {1, 0, 9}, {0, 1, 6}, {2, 0, 7}}, sampling_topology, 10) == 10);
+  CHECK(class_sample_count({{0, 0, 4}, {1, 0, 9}}, sampling_topology, 2) == 9);
   return failures == 0 ? 0 : 1;
 }

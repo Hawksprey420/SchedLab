@@ -37,6 +37,7 @@ struct Observation {
   std::uint8_t logical_processor_index;
   std::uint64_t samples;
 };
+std::uint64_t class_sample_count(const std::vector<Observation>& observations, const std::vector<CpuSet>& topology, std::uint8_t efficiency_class);
 struct Measurement {
   int run;
   double elapsed_ms;

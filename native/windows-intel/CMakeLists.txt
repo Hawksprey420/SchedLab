@@ -46,3 +46,30 @@ add_executable(test_workload tests/test_workload.cpp)
 target_link_libraries(test_workload PRIVATE native_helpers)
 native_warnings(test_workload)
 add_test(NAME native_workload COMMAND test_workload)
+
+add_library(native_windows STATIC src/topology_win.cpp src/cpu_sets.cpp src/measurement.cpp)
+target_compile_definitions(native_windows PUBLIC _WIN32_WINNT=0x0A00 WIN32_LEAN_AND_MEAN NOMINMAX)
+target_link_libraries(native_windows PUBLIC native_helpers PowrProf Advapi32)
+native_warnings(native_windows)
+
+add_executable(test_topology tests/test_topology.cpp)
+target_link_libraries(test_topology PRIVATE native_windows)
+native_warnings(test_topology)
+add_test(NAME native_topology_records COMMAND test_topology)
+
+add_executable(schedlab-intel src/main.cpp)
+target_link_libraries(schedlab-intel PRIVATE native_windows)
+native_warnings(schedlab-intel)
+find_program(POWERSHELL pwsh REQUIRED)
+add_test(NAME native_detect COMMAND ${POWERSHELL} -NoProfile -File
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_detect.ps1
+  -Executable $<TARGET_FILE:schedlab-intel> -Output ${CMAKE_CURRENT_BINARY_DIR}/test-detect.json)
+set_tests_properties(native_detect PROPERTIES TIMEOUT 20)
+
+add_executable(test_measurement tests/test_measurement.cpp)
+target_link_libraries(test_measurement PRIVATE native_windows)
+native_warnings(test_measurement)
+add_test(NAME native_measurement_boundaries COMMAND test_measurement)
+
+add_test(NAME native_saved_samples COMMAND ${POWERSHELL} -NoProfile -File
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_samples.ps1 -Examples ${CMAKE_CURRENT_SOURCE_DIR}/../../examples)
