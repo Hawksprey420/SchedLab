@@ -35,3 +35,8 @@ Not verified: Firefox/Safari, real touch hardware, screen-reader speech, optiona
 ## Next action
 
 Finish and independently review P2, then create P3 from updated master.
+
+Independent P2 review: full suites reproduced (15 CTest, 685 Vitest, 17 Playwright),
+identical WASM; 720 independent oracle combinations and 16 extra boundary cases
+passed. Sole finding R1 (editor burst-unit wording) regression reproduced and fixed;
+final re-review/merge pending on PR 4.

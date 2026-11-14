@@ -52,3 +52,20 @@ The normal Vite node:module externalization and Playwright colour-environment
 warnings remain; tested application browser consoles are clean.
 
 Independent review and PR result will be recorded below before merge.
+
+### Independent P2 review
+
+The independent reviewer rebuilt the native project and reproduced 15/15 CTest,
+685/685 Vitest, typecheck/build, 17/17 Playwright and an identical WASM module
+(SHA256 `9E2F089AF7772CB344322C4D32AE89B9DEC977D0D0275A06A2949F52E5278896`).
+A separate tick-by-tick oracle matched 720/720 generated setting combinations;
+16 extra manual/boundary cases passed. The reviewer visually inspected all eight
+profile/width/theme screenshots and repeated DOM, overflow, console and focus checks.
+
+The reviewer found one unit-guidance error: the editor still said burst was ticks
+in hybrid mode. A new browser assertion failed before correction. The editor now
+receives the mode, says burst is work units for either heterogeneous profile, and
+restores the exact original ticks sentence in single-core mode. The new matrix
+asserts these states. No scheduling or generated-WASM change was needed for this fix.
+See [PR 4](https://github.com/Hawksprey420/SchedLab/pull/4) and
+[the initial independent review](https://github.com/Hawksprey420/SchedLab/pull/4#pullrequestreview-5900928551).
