@@ -118,3 +118,5 @@ Not verified: Firefox/Safari, physical touch hardware, screen-reader speech,
 exhaustive allocation-failure injection, enormous malformed JS arrays, or a fully
 disconnected operating system. The browser boundary's caps and chart display limits
 are documented in the README. No deployment was performed.
+
+Historical note (14 November 2026): the owner subsequently approved P0, merged it and tagged v0.1-required. The pre-approval status above is the original P0 record. Optional P2/P3 evidence is maintained in [extension verification](extension-verification.md); the required simulator remains the default.
