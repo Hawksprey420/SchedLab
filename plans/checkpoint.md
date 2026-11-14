@@ -1,42 +1,53 @@
 # Checkpoint
 
-**Goal:** deliver approved P2 hybrid simulation, independently review and merge it;
-then deliver P3 native Windows CPU Sets traces and offline browser import.
-P0 is merged on master and tagged `v0.1-required`. Do not create another release
-tag or write the assignment PDF report in this work.
+**Goal:** deliver approved P2 and P3. P2 merged; P3 implementation and verification
+complete, awaiting independent review and merge. Do not tag a release or write the
+assignment PDF report in this work.
+
+## Workstreams
+
+| Work | Branch | State |
+|---|---|---|
+| Required single-core simulator | master, `v0.1-required` | P0 frozen; original 13 CTest / 319 Vitest / 13 Playwright unchanged |
+| Intel/Arm teaching simulation | `feature/hybrid-sim` | [PR 4](https://github.com/Hawksprey420/SchedLab/pull/4) merged at `12a3199` after independent approval |
+| Windows CPU Sets tool and offline import | `experiment/intel-native` | implemented; final independent review/PR merge pending |
 
 ## Decisions
 
-- Owner approved P2 followed by P3 on 14 November 2026, superseding the old stop gate.
-- One branch and PR per workstream: `feature/hybrid-sim`, then `experiment/intel-native`.
-- Core alone owns queue order, placement, durations and metrics. No JS scheduler.
-- Hybrid contract: `docs/hybrid-contract.md`; assumptions: `docs/hardware-assumptions.md`.
-- Ten Intel physical lanes (6 P + 4 E), eight Arm lanes. Fictional integer rates
-  and abstract energy index. Priority unused. Default graded mode unchanged.
-- Optional controls follow the original form to retain the graded layout.
-- Independent reviewer reruns all suites before merge; implementer does not merge.
+- Owner approved P2 then P3 on 14 November 2026. P1 playback/comparison remains out.
+- Scheduling/metrics stay in core. Default graded mode retains its original behavior.
+- Ten Intel physical lanes, eight Arm lanes; fictional rates and abstract energy.
+- Native tool is a separate build with no core/browser linkage. Runtime classes,
+  one worker, warm-up, bounded opt-in runs, truthful sample observations and JSON.
+- Trace files stay local; measured milliseconds use a separate panel, never ticks.
+- One branch/PR per workstream; independent reviewer reruns checks and merges.
 
 ## Latest verified result
 
-P0 baseline: 13 CTest, 319 Vitest, 13 Playwright; see `docs/p0-verification.md`.
-P2 UI: typecheck passes; 4/4 new Playwright cases pass at 375/1280 px in both themes,
-with topology/placement switching, returned values, editing/rerun and return to
-single core. Full suite, generated WASM, independent review and PR pending.
-Browser skill checker: zero overflow, DOM issues or console errors at both widths;
-all 24 default-view focus stops show focus. Hybrid matrix DOM/console clean.
-SVG bar focus uses its active stroke; the generic checker only sees CSS outlines.
+P2 final independent result: 15 CTest / 685 Vitest / 17 Playwright, types/build,
+identical WASM, 720 independent oracle combinations and 16 boundary probes passed.
+P3 implementer result: **15 core CTest / 9 native CTest / 764 Vitest / 22 Playwright**,
+types/build pass. All original P0/P2 assertions unchanged. Browser matrix375/1280 px,
+light/dark, offline samples, malformed/oversized imports, HTML-like text, file-read
+failure and stale-read recovery passed. DOM/overflow/console checks clean, 28/28
+initial-view focus stops visible. See `docs/extension-verification.md`.
 
-## Open work
+## Actual native samples
 
-Complete P2 full verification and independent review/merge. P3 has not started.
-P1 playback/comparison, PDF report and conclusion answers are outside this task.
-Not verified: Firefox/Safari, real touch hardware, screen-reader speech, optional axe.
+Previously collected on this i7-12650H, Balanced, three repeats after one warm-up:
+performance median678.46 ms, efficient828.32 ms. All checksums51001733377.
+Successful requests did not ensure isolation: efficient requested-class samples
+365/382,310/382,365/382; performance382/382 each. UI warns explicitly. Background,
+thermals, frequency, SMT and power limits uncontrolled; no isolated speed ratio.
+Native source commits `a4b8824`, `2fcc367` (shared validator unit), `5b7ea07`.
+
+## Open limits
+
+No Firefox/Safari, physical touch, screen-reader speech, optional axe, manual console
+Ctrl+C delivery or exhaustive Win32 failure injection. Worker cancellation itself
+is tested. No deployment, new tag or PDF/report created. Submission report and
+conclusion answers remain owner's work.
 
 ## Next action
 
-Finish and independently review P2, then create P3 from updated master.
-
-Independent P2 review: full suites reproduced (15 CTest, 685 Vitest, 17 Playwright),
-identical WASM; 720 independent oracle combinations and 16 extra boundary cases
-passed. Sole finding R1 (editor burst-unit wording) regression reproduced and fixed;
-final re-review/merge pending on PR 4.
+Independently review and merge the complete P3 branch, then stop with owner handoff.

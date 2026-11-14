@@ -135,3 +135,33 @@ The specification is [plan.md](plan.md). API details and deliberate refinements 
 in [the core contract](docs/core-contract.md) and [the web contract](docs/web-contract.md).
 Scheduling decisions belong only in `core/`; `web/` renders them, and any future
 Windows-specific code belongs in `native/`.
+
+## Import a native measurement
+
+Build the optional Windows tool separately using
+[`native/windows-intel/README.md`](native/windows-intel/README.md). `detect --output`
+runs no workload; `bench --class performance|efficient --repeats N --output` is an
+explicit bounded experiment. It needs no elevation and does not change system power
+settings. It uses runtime Windows CPU Set classes and reports observed processors.
+
+Below the simulator, choose **Import hardware trace** or load a bundled performance
+or efficient sample. The local JSON stays in memory; nothing is uploaded. Imports
+are limited to 1 MB and checked against the versioned native schema. Measured runs
+appear in a separate **Native measured** panel in milliseconds, with their original
+caveats. They are never drawn on the simulated-tick axis or called FCFS/SJF results.
+Samples were previously collected on this specific i7-12650H. See
+[hardware assumptions](docs/hardware-assumptions.md) for CPU Sets limitations and
+[extension verification](docs/extension-verification.md) for real test results.
+
+The Windows tool's own tests are separate:
+
+```powershell
+cmake -S native/windows-intel -B build/intel
+cmake --build build/intel --config Release
+ctest --test-dir build/intel --output-on-failure -C Release
+```
+
+Current extension verification: 15 core CTests, 9 native CTests, 764 Vitest and
+22 Chromium Playwright tests. All original P0 cases remain unchanged. Timings in
+the collected efficient-class sample include off-class observations; they do not
+establish an isolated P/E speed ratio.
