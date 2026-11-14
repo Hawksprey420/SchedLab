@@ -8,6 +8,7 @@ import { ProcessEditor } from "../components/ProcessEditor";
 import { ResultsSection } from "../components/ResultsSection";
 import { RunControls } from "../components/RunControls";
 import { TopologySelector } from "../components/TopologySelector";
+import { HardwareTraceImport } from "../components/HardwareTraceImport";
 import { EXAMPLES } from "../lib/examples";
 import { useSchedLab } from "../state/useSchedLab";
 
@@ -55,6 +56,7 @@ export function App() {
           </div>
         </form>
         <TopologySelector profile={app.profile} heuristic={app.heuristic} onProfile={app.changeProfile} onHeuristic={app.changeHeuristic} />
+        <HardwareTraceImport />
       </main>
       <LiveRegion message={app.liveMessage} />
     </div>
