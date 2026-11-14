@@ -4,12 +4,25 @@ SchedLab is a single-core CPU scheduling simulator for an Operating Systems fina
 project. Enter processes, choose first-come, first-served (FCFS) or non-preemptive
 shortest job first (SJF), and inspect the Gantt chart and per-process results.
 Priority is recorded input; neither algorithm uses it to choose a process.
-All times are integer simulation ticks, not measured CPU performance.
+All simulation times are integer ticks, not measured CPU performance.
 
 The browser runs the **C++20 core compiled to WebAssembly with Emscripten**. React
 parses the editor fields and renders the core's answers through `SchedulerAdapter`;
 there is no JavaScript scheduling implementation or fallback engine. The native CLI
 uses the same core and text parser.
+
+The optional architecture controls below the graded simulator select Intel-style
+6 P + 4 E physical lanes or Arm-style 1 Prime + 3 Big + 4 LITTLE lanes. FCFS/SJF
+queue order and lane placement are separate choices. The core returns all placements,
+durations and metrics; the browser only renders them. Single core (graded) stays
+the default and retains its original chart and metrics.
+
+Hybrid results carry `SIMULATED` and `Experimental / simplified model` labels.
+Burst becomes work units, and duration is ceil(work / lane rate) ticks. Rate and
+energy assumptions appear beside the results. They are fictional teaching values,
+not measurements of a CPU. See [hardware assumptions](docs/hardware-assumptions.md)
+and [the hybrid contract](docs/hybrid-contract.md) for tie rules, the ten physical
+Intel lanes versus sixteen logical processors, and the abstract energy index.
 
 ## Build and run
 
@@ -114,9 +127,9 @@ pwsh -NoProfile -File scripts/build-wasm.ps1
 - Chromium is verified. Firefox, Safari, physical touch devices and screen-reader
   speech output have not been tested. Accessibility checks do not establish full
   conformance.
-- P0 includes no playback, comparison panel, heterogeneous lanes or native hardware
-  experiment. No release tag is created before owner review. The assignment PDF
-  report and five conclusion answers remain submission work.
+- P0 is frozen at `v0.1-required`. The owner approved the optional P2/P3 work after
+  that gate. Playback and comparison panels remain outside this extension.
+  The assignment PDF report and five conclusion answers remain submission work.
 
 The specification is [plan.md](plan.md). API details and deliberate refinements are
 in [the core contract](docs/core-contract.md) and [the web contract](docs/web-contract.md).
