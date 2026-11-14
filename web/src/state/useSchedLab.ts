@@ -6,7 +6,7 @@ import { mapCoreErrors } from "../lib/mapErrors";
 import { parseRowField, parseWorkload } from "../lib/parseWorkload";
 import { parseCount, type NumericField } from "../lib/parseField";
 import { describeRemoval } from "../lib/removalText";
-import type { Algorithm, Schedule } from "../models/types";
+import type { Algorithm, Schedule, Profile, Placement } from "../models/types";
 import { fieldElementId, fieldKey, type FieldName, type ProcessRow } from "../models/workload";
 import type { SummaryItem } from "../components/ErrorSummary";
 import { deriveResultView } from "./resultView";
@@ -44,6 +44,8 @@ export function useSchedLab() {
   const { engine, retry } = useEngine();
   const [workload, dispatch] = useReducer(workloadReducer, undefined, createInitialWorkload);
   const [algorithm, setAlgorithm] = useState<Algorithm>("FCFS");
+  const [profile, setProfile] = useState<Profile>("SINGLE_CORE");
+  const [heuristic, setHeuristic] = useState<Placement>("FIRST_AVAILABLE");
   const simulation = useSimulation(engine);
   const { message: liveMessage, announce } = useAnnouncer();
   const requestFocus = useFocusRequest();
@@ -160,6 +162,8 @@ export function useSchedLab() {
   const reset = useCallback(() => {
     dispatch({ type: "load", processes: DEFAULT_EXAMPLE.processes });
     setAlgorithm("FCFS");
+    setProfile("SINGLE_CORE");
+    setHeuristic("FIRST_AVAILABLE");
     simulation.clear();
     announce("Reset to the T1 example with FCFS. No result yet.");
   }, [simulation, announce]);
@@ -169,11 +173,19 @@ export function useSchedLab() {
       setAlgorithm(next);
       // Only a result that is on screen is recomputed; otherwise the choice waits for Run.
       if (view.kind !== "schedule" || !parsed.ok) return;
-      const record = simulation.run(parsed.processes, next, workload.version);
+      const record = simulation.run(parsed.processes, next, workload.version, profile, heuristic);
       if (record?.outcome.ok) announce(resultSentence(next, record.outcome.schedule));
     },
-    [view.kind, parsed, simulation, workload.version, announce],
+    [view.kind, parsed, simulation, workload.version, profile, heuristic, announce],
   );
+
+  function changeTopology(nextProfile: Profile, nextHeuristic: Placement) {
+    setProfile(nextProfile);
+    setHeuristic(nextHeuristic);
+    if (view.kind !== "schedule" || !parsed.ok) return;
+    const record = simulation.run(parsed.processes, algorithm, workload.version, nextProfile, nextHeuristic);
+    if (record?.outcome.ok) announce(resultSentence(algorithm, record.outcome.schedule));
+  }
 
   const run = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
@@ -208,7 +220,7 @@ export function useSchedLab() {
         return;
       }
 
-      const record = simulation.run(input.processes, algorithm, submitted.version);
+      const record = simulation.run(input.processes, algorithm, submitted.version, profile, heuristic);
       if (!record) return;
       if (record.outcome.ok) {
         announce(resultSentence(algorithm, record.outcome.schedule));
@@ -224,7 +236,7 @@ export function useSchedLab() {
       const total = record.outcome.errors.length;
       announce(`The simulator rejected the workload: ${total} ${total === 1 ? "problem" : "problems"}.`, 700);
     },
-    [engine.status, parsed, simulation, algorithm, workload, rows, requestFocus, announce],
+    [engine.status, parsed, simulation, algorithm, profile, heuristic, workload, rows, requestFocus, announce],
   );
 
   return {
@@ -236,8 +248,12 @@ export function useSchedLab() {
     summary,
     removed: workload.undo?.removed ?? null,
     algorithm,
+    profile,
+    heuristic,
+    changeProfile: (next: Profile) => changeTopology(next, heuristic),
+    changeHeuristic: (next: Placement) => changeTopology(profile, next),
     view,
-    resultKey: `${workload.version}-${algorithm}`,
+    resultKey: `${workload.version}-${algorithm}-${profile}-${heuristic}`,
     focusField: (rowKey: number, field: FieldName) => requestFocus(fieldElementId(rowKey, field)),
     announce,
     edit,

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import type { Algorithm, ProcessInput, SimulationOutcome } from "../models/types";
+import type { Algorithm, ProcessInput, SimulationOutcome, Profile, Placement } from "../models/types";
 import type { EngineState } from "./useEngine";
 
 export interface SimulationRecord {
@@ -14,11 +14,13 @@ export function useSimulation(engine: EngineState) {
   const [record, setRecord] = useState<SimulationRecord | null>(null);
 
   const run = useCallback(
-    (processes: ProcessInput[], algorithm: Algorithm, version: number): SimulationRecord | null => {
+    (processes: ProcessInput[], algorithm: Algorithm, version: number, profile: Profile = "SINGLE_CORE", heuristic: Placement = "FIRST_AVAILABLE"): SimulationRecord | null => {
       if (engine.status !== "ready") return null;
       let outcome: SimulationOutcome;
       try {
-        outcome = engine.adapter.simulate(processes, algorithm);
+        outcome = profile === "SINGLE_CORE"
+          ? engine.adapter.simulate(processes, algorithm)
+          : engine.adapter.simulateHybrid(processes, algorithm, profile, heuristic);
       } catch (error) {
         // The adapter promises not to throw for bad input; anything that does escape is a
         // fault in the engine, which the user can only be told about.

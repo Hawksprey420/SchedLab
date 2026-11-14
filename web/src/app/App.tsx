@@ -7,6 +7,7 @@ import { LiveRegion } from "../components/LiveRegion";
 import { ProcessEditor } from "../components/ProcessEditor";
 import { ResultsSection } from "../components/ResultsSection";
 import { RunControls } from "../components/RunControls";
+import { TopologySelector } from "../components/TopologySelector";
 import { EXAMPLES } from "../lib/examples";
 import { useSchedLab } from "../state/useSchedLab";
 
@@ -52,6 +53,7 @@ export function App() {
             <ResultsSection view={app.view} />
           </div>
         </form>
+        <TopologySelector profile={app.profile} heuristic={app.heuristic} onProfile={app.changeProfile} onHeuristic={app.changeHeuristic} />
       </main>
       <LiveRegion message={app.liveMessage} />
     </div>
