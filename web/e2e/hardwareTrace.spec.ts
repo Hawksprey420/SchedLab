@@ -12,6 +12,11 @@ for (const width of [375,1280]) for (const theme of ["light","dark"] as const) {
   await expect(page.getByRole("table",{name:"Measured native runs"})).toHaveCount(0);
   await input.setInputFiles({name:"huge.json",mimeType:"application/json",buffer:Buffer.alloc(1000001,32)});
   await expect(page.getByRole("alert")).toContainText("1 MB");
+  const manipulated=JSON.parse(readFileSync(resolve(import.meta.dirname,"../../examples/sample-native-trace-performance.json"),"utf8"));
+  manipulated.summary={medianMs:1,minMs:1,maxMs:5000};
+  await input.setInputFiles({name:"inconsistent-summary.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(manipulated))});
+  await expect(page.getByRole("alert")).toContainText("summary");
+  await expect(page.getByRole("table",{name:"Measured native runs"})).toHaveCount(0);
   await page.getByRole("button",{name:"Load performance sample"}).click();
   await expect(page.getByRole("heading",{name:"Native measured",exact:true})).toBeVisible();
   await expect(page.getByRole("table",{name:"Measured native runs"}).locator("tbody tr")).toHaveCount(3);

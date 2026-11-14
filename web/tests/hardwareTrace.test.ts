@@ -5,6 +5,29 @@ const cpu = {id:1,group:0,logicalProcessorIndex:0,coreIndex:0,efficiencyClass:1,
 const run = {run:1,elapsedMs:12,selectedCpuSetIds:[1],observedLogicalCpus:[{group:0,logicalProcessorIndex:0,samples:382}],affinityRequestSucceeded:true,affinityError:"",requestedClassSamples:382,totalSamples:382,checksum:"50999000000"};
 const trace = () => ({schemaVersion:1,mode:"NATIVE_MEASURED",collectedAt:"2026-11-14T03:00:00Z",machine:{cpuName:"test CPU",os:"Windows",topologyDetected:true},powerScheme:"Balanced",cpuSets:[cpu,{...cpu,id:2,logicalProcessorIndex:1,coreIndex:1,efficiencyClass:0}],scenario:{workload:"bounded_compute",requestedClass:"performance",repeats:1,iterations:400000000,warmupRuns:1},measurements:[run],summary:{medianMs:12,minMs:12,maxMs:12},notes:["Previously collected; temperature and background activity affect timing."]});
 const parse = (value: unknown) => parseHardwareTrace(JSON.stringify(value));
+const timedTrace = (elapsedMs: number[], summary: ReturnType<typeof trace>["summary"]) => ({
+  ...trace(), scenario: {...trace().scenario, repeats: elapsedMs.length},
+  measurements: elapsedMs.map((elapsedMs, index) => ({...run, run: index + 1, elapsedMs})), summary,
+});
+
+test.each([
+  ["odd decimal", [678.4595, 668.6926, 689.6459], {medianMs:678.4595,minMs:668.6926,maxMs:689.6459}],
+  ["even decimal", [0.2, 0.1], {medianMs:0.15000000000000002,minMs:0.1,maxMs:0.2}],
+  ["one repeat", [0.1], {medianMs:0.1,minMs:0.1,maxMs:0.1}],
+  ["twenty repeats", Array.from({length:20}, (_,i)=>(20-i)/10), {medianMs:1.05,minMs:0.1,maxMs:2}],
+] as const)("preserves a consistent native summary: %s", (_name, elapsedMs, summary) => {
+  const value = timedTrace([...elapsedMs], summary);
+  expect(parse(value)).toEqual({ok:true,trace:value});
+});
+
+test.each([
+  ["odd median", [3.5, 1.25, 2.75], {medianMs:2,minMs:1.25,maxMs:3.5}],
+  ["minimum", [3.5, 1.25, 2.75], {medianMs:2.75,minMs:1,maxMs:3.5}],
+  ["maximum", [3.5, 1.25, 2.75], {medianMs:2.75,minMs:1.25,maxMs:4}],
+  ["even median", [0.2, 0.1], {medianMs:0.15,minMs:0.1,maxMs:0.2}],
+] as const)("rejects an inconsistent native summary: %s", (_name, elapsedMs, summary) => {
+  expect(parse(timedTrace([...elapsedMs], summary))).toMatchObject({ok:false,error:expect.stringMatching(/summary/i)});
+});
 test("accepts a measured trace and preserves text as data", () => {
   const value=trace(); value.notes=["<img src=x onerror=alert(1)>"];
   expect(parse(value)).toEqual({ok:true,trace:value});

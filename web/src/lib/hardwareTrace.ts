@@ -90,7 +90,11 @@ function validate(value: unknown): HardwareTrace {
   else {
     const s = object(r.summary, "summary");
     summary = {medianMs: elapsed(s.medianMs, "median"), minMs: elapsed(s.minMs, "minimum"), maxMs: elapsed(s.maxMs, "maximum")};
-    requireValue(summary.minMs <= summary.medianMs && summary.medianMs <= summary.maxMs && measurements.every(m => m.elapsedMs >= summary!.minMs && m.elapsedMs <= summary!.maxMs), "summary range");
+    // Match native statistics.cpp exactly; keep the supplied summary for display.
+    const times = measurements.map(m => m.elapsedMs).sort((a, b) => a - b);
+    const middle = Math.floor(times.length / 2);
+    const median = times.length % 2 === 0 ? (times[middle - 1]! + times[middle]!) / 2 : times[middle]!;
+    requireValue(summary.minMs === times[0] && summary.maxMs === times[times.length - 1] && summary.medianMs === median, "summary consistency");
   }
   return {
     schemaVersion: 1, mode: "NATIVE_MEASURED", collectedAt,
