@@ -161,7 +161,7 @@ cmake --build build/intel --config Release
 ctest --test-dir build/intel --output-on-failure -C Release
 ```
 
-Current extension verification: 15 core CTests, 9 native CTests, 764 Vitest and
+Current extension verification: 15 core CTests, 9 native CTests, 772 Vitest and
 22 Chromium Playwright tests. All original P0 cases remain unchanged. Timings in
 the collected efficient-class sample include off-class observations; they do not
 establish an isolated P/E speed ratio.
