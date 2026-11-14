@@ -1,72 +1,42 @@
 # Checkpoint
 
-**Goal:** P0 software acceptance complete for owner review: FCFS and non-preemptive
-SJF, C++/WebAssembly, React input/validation, Gantt chart and metrics. Stop here;
-`v0.1-required` is deliberately untagged and P1-P3 have not started.
+**Goal:** deliver approved P2 hybrid simulation, independently review and merge it;
+then deliver P3 native Windows CPU Sets traces and offline browser import.
+P0 is merged on master and tagged `v0.1-required`. Do not create another release
+tag or write the assignment PDF report in this work.
 
-## Owner decisions (13 November 2026)
+## Decisions
 
-- GitHub repository `Hawksprey420/SchedLab` is public; one pull request per workstream.
-- Browser engine is the C++ core through Emscripten/WASM, not the TypeScript fallback.
-- Stop at the P0 gate for owner review before P1-P3.
-- The owner's agent builds the C++ core that `plan.md` section 9 suggested for Lawrence;
-  no separate Lawrence review is required.
-- Commits carry no AI attribution trailers.
-- Cheaper models do the implementation and review; Codex and Antigravity may be used as
-  independent reviewers when their work is checked.
-- Web UI: plan stack only (React, TypeScript, Vite, Tailwind, SVG), built with the
-  modern-web-guidance, senior-frontend, frontend-design and antislop skills, antislop
-  applied during the work. Direction: textbook / print-ready (`DESIGN.md`). Gantt
-  processes use colour, pattern and label.
-- Code must stay modular and maintainable; docs follow the antislop copy rules.
-
-## State
-
-| Task | Branch | Status |
-|---|---|---|
-| Scaffold, plan, agent rules, skills | `feature/core-fcfs-sjf` | merged (PR 1) |
-| C++ core, validation, metrics, CLI, T1-T8 | `feature/core-fcfs-sjf` | merged (PR 1), `954734b` |
-| WASM bridge and parity test | `feature/wasm-bridge` | independently reviewed; PR 2 merged at `393670d` |
-| Web UI (P0) | `feature/web-ui` | PR 3 independently approved; final software/evidence head `393a195` |
-
-## Verified commits and decisions
-
-- Bridge fixes `1c168a7`, `cc1af32`: exact aggregate averages and native rounding,
-  non-string algorithm errors, bounded structured IDs, regenerated WASM module.
-- UI fixes `0ca83b9`, `ede73d3`, `368493b`, `6d9aff6`: count drafts/reset, mobile
-  action clicks, idle hover/touch hit area, and bounded removal Undo. Count applies
-  on Enter or Run; adding rows expires removal Undo, while field edits preserve it.
-- Engine recovery/touch tests `1fcdc0d`; README, evidence and four inspected
-  screenshots updated through `393a195`. Each defect has a regression seen fail first.
-- Scheduling and metrics remain in `core/`; the UI only parses fields and renders
-  adapter output. Structured IDs are capped at 1024 UTF-16 units before WASM copying.
+- Owner approved P2 followed by P3 on 14 November 2026, superseding the old stop gate.
+- One branch and PR per workstream: `feature/hybrid-sim`, then `experiment/intel-native`.
+- Core alone owns queue order, placement, durations and metrics. No JS scheduler.
+- Hybrid contract: `docs/hybrid-contract.md`; assumptions: `docs/hardware-assumptions.md`.
+- Ten Intel physical lanes (6 P + 4 E), eight Arm lanes. Fictional integer rates
+  and abstract energy index. Priority unused. Default graded mode unchanged.
+- Optional controls follow the original form to retain the graded layout.
+- Independent reviewer reruns all suites before merge; implementer does not merge.
 
 ## Latest verified result
 
-At `393a195`, both implementer and independent reviewer observed: native configure
-and Release build exit 0; **13/13 CTest entries**, **319/319 Vitest tests in 13 files**,
-typecheck/build exit 0, and **13/13 Chromium Playwright tests**. The checker reports
-zero console errors, DOM issues or page overflow at 375/1280 px, with all 23 visited
-focus stops visibly focused. Both themes, T1/T2 under both algorithms, invalid
-input, idle hover/touch, keyboard/Undo, engine loading/failure/retry, and 100 processes
-with a 100,000,000-tick makespan passed. External requests were blocked while the
-local server supplied all assets. Four fresh result screenshots were inspected.
+P0 baseline: 13 CTest, 319 Vitest, 13 Playwright; see `docs/p0-verification.md`.
+P2 UI: typecheck passes; 4/4 new Playwright cases pass at 375/1280 px in both themes,
+with topology/placement switching, returned values, editing/rerun and return to
+single core. Full suite, generated WASM, independent review and PR pending.
+Browser skill checker: zero overflow, DOM issues or console errors at both widths;
+all 24 default-view focus stops show focus. Hybrid matrix DOM/console clean.
+SVG bar focus uses its active stroke; the generic checker only sees CSS outlines.
 
-PR 2 review: [approved and merged](https://github.com/Hawksprey420/SchedLab/pull/2#issuecomment-6857283446).
-PR 3 review: [approved](https://github.com/Hawksprey420/SchedLab/pull/3#issuecomment-6858067574).
-The reviewer also checked 12 final phone/theme edge probes, 18 additional T3-T8
-native/browser cases and blocked-local-storage recovery. Full evidence and the
-section 12 submission audit: `docs/p0-verification.md`; reproducible commands: `README.md`.
+## Open work
 
-## Blockers and remaining submission work
-
-No unresolved confirmed P0 software defects. The assignment PDF report, function
-screenshots in that PDF, five conclusion answers and single group submission remain
-open. Firefox/Safari, physical touch hardware, screen-reader speech, exhaustive
-allocation failures, enormous malformed JS arrays and a fully disconnected OS were
-not verified. axe-core's optional audit was not installed. No deployment occurred.
+Complete P2 full verification and independent review/merge. P3 has not started.
+P1 playback/comparison, PDF report and conclusion answers are outside this task.
+Not verified: Firefox/Safari, real touch hardware, screen-reader speech, optional axe.
 
 ## Next action
 
-Owner reviews the P0 implementation and verification record before any release tag
-or further feature work. The agent stops at this checkpoint.
+Finish and independently review P2, then create P3 from updated master.
+
+Independent P2 review: full suites reproduced (15 CTest, 685 Vitest, 17 Playwright),
+identical WASM; 720 independent oracle combinations and 16 extra boundary cases
+passed. Sole finding R1 (editor burst-unit wording) regression reproduced and fixed;
+final re-review/merge pending on PR 4.

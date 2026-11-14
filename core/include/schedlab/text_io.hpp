@@ -22,6 +22,10 @@ struct TextRun {
 
 // "fcfs" or "sjf" (lowercase, exact); anything else is nullopt.
 std::optional<Algorithm> parse_algorithm_name(const std::string& name);
+std::optional<Profile> parse_profile_name(const std::string& name);
+std::optional<Placement> parse_placement_name(const std::string& name);
+std::string profile_name(Profile profile);
+std::string placement_name(Placement placement);
 
 // One process per line as "id arrival burst priority". Blank lines and lines starting
 // with '#' are ignored, and a leading UTF-8 byte-order mark is dropped. Malformed lines
@@ -32,5 +36,7 @@ std::vector<Process> parse_processes(const std::string& text, std::vector<Valida
 // the formatted schedule (kExitOk), the formatted errors (kExitInvalidInput), or nothing
 // for an unknown algorithm name (kExitUsage).
 TextRun run_text(const std::string& algorithm_name, const std::string& input);
+TextRun run_hybrid_text(const std::string& algorithm_name, const std::string& profile,
+                        const std::string& heuristic, const std::string& input);
 
 }  // namespace schedlab

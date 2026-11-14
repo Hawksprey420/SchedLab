@@ -118,3 +118,40 @@ describe("WASM runText matches native schedlab-cli", () => {
     expect(wasm.runText("rr" as CliAlgorithm, "P1 0 1 0\n")).toEqual({ exitCode: 2, stdout: "" });
   });
 });
+
+const hybridCases = [...fixtures, ...generated.slice(0, 12)].flatMap(({ name, input }) =>
+  ALGORITHMS.flatMap((algorithm) =>
+    (["SINGLE_CORE", "INTEL_6P_4E", "ARM_1_3_4"] as const).flatMap((profile) =>
+      (["FIRST_AVAILABLE", "FASTEST_AVAILABLE", "ENERGY_FIRST"] as const).map((heuristic) => ({
+        label: `${name} ${algorithm} ${profile} ${heuristic}`, algorithm, profile, heuristic, input,
+      })),
+    ),
+  ),
+);
+
+describe("hybrid WASM text matches the native CLI", () => {
+  test.each(hybridCases)("$label", ({ algorithm, profile, heuristic, input }) => {
+    const native = spawnSync(nativeCliPath(), ["hybrid", algorithm, profile, heuristic], {
+      input, encoding: "utf8",
+    });
+    if (native.error) throw native.error;
+    const run = wasm.runHybridText(algorithm, profile, heuristic, input);
+    expect({ exitCode: run.exitCode, stdout: normalise(run.stdout) }).toEqual({
+      exitCode: native.status ?? -1, stdout: normalise(native.stdout),
+    });
+  });
+
+  test("unknown settings are usage errors", () => {
+    expect(wasm.runHybridText("fcfs", "unknown" as "SINGLE_CORE", "FIRST_AVAILABLE", "A 0 1 0\n"))
+      .toEqual({ exitCode: 2, stdout: "" });
+  });
+
+  test("checked native energy overflow is the same validation failure in WASM", () => {
+    const input = "A 0 9223372036854775807 1\n";
+    const native = spawnSync(nativeCliPath(), ["hybrid", "fcfs", "INTEL_6P_4E", "FASTEST_AVAILABLE"], { input, encoding: "utf8" });
+    const wasmRun = wasm.runHybridText("fcfs", "INTEL_6P_4E", "FASTEST_AVAILABLE", input);
+    expect(wasmRun.exitCode).toBe(1);
+    expect(wasmRun.stdout).toBe(normalise(native.stdout));
+    expect(native.status).toBe(1);
+  });
+});

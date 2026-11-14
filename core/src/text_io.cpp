@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <sstream>
 #include <system_error>
+#include <stdexcept>
 
 #include "schedlab/format.hpp"
 #include "schedlab/scheduler.hpp"
@@ -74,6 +75,38 @@ std::optional<Algorithm> parse_algorithm_name(const std::string& name) {
   return std::nullopt;
 }
 
+std::optional<Profile> parse_profile_name(const std::string& name) {
+  if (name == "SINGLE_CORE") return Profile::SINGLE_CORE;
+  if (name == "INTEL_6P_4E") return Profile::INTEL_6P_4E;
+  if (name == "ARM_1_3_4") return Profile::ARM_1_3_4;
+  return std::nullopt;
+}
+
+std::optional<Placement> parse_placement_name(const std::string& name) {
+  if (name == "FIRST_AVAILABLE") return Placement::FIRST_AVAILABLE;
+  if (name == "FASTEST_AVAILABLE") return Placement::FASTEST_AVAILABLE;
+  if (name == "ENERGY_FIRST") return Placement::ENERGY_FIRST;
+  return std::nullopt;
+}
+
+std::string profile_name(Profile profile) {
+  switch (profile) {
+    case Profile::SINGLE_CORE: return "SINGLE_CORE";
+    case Profile::INTEL_6P_4E: return "INTEL_6P_4E";
+    case Profile::ARM_1_3_4: return "ARM_1_3_4";
+  }
+  throw std::invalid_argument("unknown profile");
+}
+
+std::string placement_name(Placement placement) {
+  switch (placement) {
+    case Placement::FIRST_AVAILABLE: return "FIRST_AVAILABLE";
+    case Placement::FASTEST_AVAILABLE: return "FASTEST_AVAILABLE";
+    case Placement::ENERGY_FIRST: return "ENERGY_FIRST";
+  }
+  throw std::invalid_argument("unknown heuristic");
+}
+
 std::vector<Process> parse_processes(const std::string& text, std::vector<ValidationError>& errors) {
   std::istringstream input(text);
   std::vector<Process> processes;
@@ -106,6 +139,23 @@ TextRun run_text(const std::string& algorithm_name, const std::string& input) {
   if (!errors.empty()) return {kExitInvalidInput, format_errors(errors)};
 
   return {kExitOk, format_schedule(simulate_single_core(processes, *algorithm))};
+}
+
+TextRun run_hybrid_text(const std::string& algorithm_name, const std::string& profile,
+                        const std::string& heuristic, const std::string& input) {
+  const auto algorithm = parse_algorithm_name(algorithm_name);
+  const auto topology = parse_profile_name(profile);
+  const auto placement = parse_placement_name(heuristic);
+  if (!algorithm || !topology || !placement) return {kExitUsage, ""};
+  std::vector<ValidationError> errors;
+  const auto processes = parse_processes(input, errors);
+  if (errors.empty()) errors = validate(processes);
+  if (!errors.empty()) return {kExitInvalidInput, format_errors(errors)};
+  try {
+    return {kExitOk, format_hybrid_schedule(simulate_hybrid(processes, *algorithm, *topology, *placement))};
+  } catch (const std::overflow_error& error) {
+    return {kExitInvalidInput, format_errors({{kWholeInput, "processes", error.what()}})};
+  }
 }
 
 }  // namespace schedlab

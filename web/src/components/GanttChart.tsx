@@ -7,6 +7,7 @@ import { chartWidth, createScale } from "../lib/scale";
 import { segmentName } from "../lib/segmentText";
 import { axisTicks } from "../lib/ticks";
 import type { Algorithm, Schedule } from "../models/types";
+import { isHybridSchedule } from "../lib/hybridView";
 import { BarReadout } from "./BarReadout";
 import { GanttAxis } from "./GanttAxis";
 import { GanttBar } from "./GanttBar";
@@ -23,6 +24,10 @@ interface GanttChartProps {
  * runs when. The frame scrolls sideways on narrow screens, the page does not.
  */
 export function GanttChart({ schedule, algorithm }: GanttChartProps) {
+  const hybrid = isHybridSchedule(schedule) ? schedule : null;
+  const laneHeight = 78;
+  const extraHeight = hybrid ? (hybrid.lanes.length - 1) * laneHeight : 0;
+  const padding = hybrid ? 90 : PLOT_PADDING;
   const idPrefix = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const [hovered, setHovered] = useState<number | null>(null);
   const [focused, setFocused] = useState<number | null>(null);
@@ -32,7 +37,7 @@ export function GanttChart({ schedule, algorithm }: GanttChartProps) {
 
   const { width, ticks, scale, bars, styles } = useMemo(() => {
     const width = chartWidth(schedule.makespan);
-    const scale = createScale({ makespan: schedule.makespan, width, padding: PLOT_PADDING });
+    const scale = createScale({ makespan: schedule.makespan, width, padding });
     // A process keeps its colour and pattern by input position, in every algorithm.
     const position = new Map(schedule.results.map((result, index) => [result.id, index]));
     const bars = schedule.segments.map((segment) => {
@@ -43,11 +48,11 @@ export function GanttChart({ schedule, algorithm }: GanttChartProps) {
     return {
       width,
       scale,
-      ticks: axisTicks(schedule.makespan, width - 2 * PLOT_PADDING),
+      ticks: axisTicks(schedule.makespan, width - 2 * padding),
       bars,
       styles: bars.flatMap((bar) => (bar.style ? [bar.style] : [])),
     };
-  }, [schedule]);
+  }, [schedule, padding]);
 
   const shown = dismissed ? null : (hovered ?? focused);
   const activeIndex = hovered ?? focused;
@@ -88,7 +93,7 @@ export function GanttChart({ schedule, algorithm }: GanttChartProps) {
         <svg
           role="group"
           aria-label={`Gantt chart with ${bars.length} segments. The same schedule is listed as text below the figure. Use the arrow keys to move between bars.`}
-          viewBox={`0 0 ${width} ${CHART_HEIGHT}`}
+          viewBox={`0 0 ${width} ${CHART_HEIGHT + extraHeight}`}
           // The minimum width is the natural size: a narrow screen scrolls the frame instead of squeezing bars.
           style={{ minWidth: width, width: "100%", height: "auto", display: "block" }}
           onKeyDown={onKeyDown}
@@ -97,8 +102,12 @@ export function GanttChart({ schedule, algorithm }: GanttChartProps) {
           }}
         >
           <GanttDefs styles={styles} idPrefix={idPrefix} />
-          <GanttAxis scale={scale} ticks={ticks} startX={scale.x(0)} endX={scale.x(schedule.makespan)} />
+          <g transform={hybrid ? `translate(0 ${extraHeight})` : undefined}>
+            <GanttAxis scale={scale} ticks={ticks} startX={scale.x(0)} endX={scale.x(schedule.makespan)} />
+          </g>
+          {hybrid?.lanes.map((lane, index) => <text key={lane.coreId} data-lane={lane.coreId} className="gantt-text" x={8} y={index * laneHeight + 46} style={{ fill: "var(--ink)" }}>{lane.coreId}</text>)}
           {bars.map(({ segment, rect, style, label }, index) => (
+            <g key={index} role={hybrid ? "group" : undefined} aria-label={hybrid ? `Lane ${segment.coreId}` : undefined} transform={hybrid ? `translate(0 ${hybrid.lanes.findIndex(lane => lane.coreId === segment.coreId) * laneHeight})` : undefined}>
             <GanttBar
               key={index}
               index={index}
@@ -115,14 +124,15 @@ export function GanttChart({ schedule, algorithm }: GanttChartProps) {
               onBlur={() => setFocused(null)}
               onSelect={(i) => reveal(() => setFocused(i))}
             />
+            </g>
           ))}
         </svg>
       </div>
-      <BarReadout segment={shown === null ? null : (bars[shown]?.segment ?? null)} />
+      <BarReadout segment={shown === null ? null : (bars[shown]?.segment ?? null)} showCore={hybrid !== null} />
       <figcaption className="mt-1 font-serif text-sm">
-        <span className="font-semibold">Figure 1.</span> {ALGORITHM_NAME[algorithm]} schedule on one core. Time in ticks.
+        <span className="font-semibold">Figure 1.</span> {ALGORITHM_NAME[algorithm]} {hybrid ? `schedule, ${hybrid.profile}, ${hybrid.heuristic}.` : "schedule on one core."} Time in ticks.
       </figcaption>
-      <ScheduleList segments={schedule.segments} />
+      <ScheduleList segments={schedule.segments} showCore={hybrid !== null} />
     </figure>
   );
 }

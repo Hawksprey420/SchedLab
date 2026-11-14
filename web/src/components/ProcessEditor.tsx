@@ -9,6 +9,7 @@ import { UndoNotice } from "./UndoNotice";
 const FIELDS: FieldName[] = ["id", "arrival", "burst", "priority"];
 
 interface ProcessEditorProps {
+  workUnits?: boolean;
   rows: readonly ProcessRow[];
   /** Messages already filtered to the ones that may be shown, keyed by fieldKey(rowKey, field). */
   issues: ReadonlyMap<string, string>;
@@ -26,6 +27,7 @@ interface ProcessEditorProps {
 }
 
 export function ProcessEditor({
+  workUnits = false,
   rows,
   issues,
   removed,
@@ -46,7 +48,9 @@ export function ProcessEditor({
         Workload
       </SectionHeading>
       <p className="max-w-prose text-sm text-ink-muted">
-        One row per process. Arrival and burst are in ticks. Priority is recorded but not used by FCFS or SJF.
+        {workUnits
+          ? "One row per process. Arrival is in ticks; burst is work units. Priority is recorded but not used by FCFS or SJF."
+          : "One row per process. Arrival and burst are in ticks. Priority is recorded but not used by FCFS or SJF."}
       </p>
 
       <div className="mt-4 flex flex-wrap items-start gap-x-6 gap-y-4">

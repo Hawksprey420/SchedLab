@@ -7,6 +7,7 @@ import { LiveRegion } from "../components/LiveRegion";
 import { ProcessEditor } from "../components/ProcessEditor";
 import { ResultsSection } from "../components/ResultsSection";
 import { RunControls } from "../components/RunControls";
+import { TopologySelector } from "../components/TopologySelector";
 import { EXAMPLES } from "../lib/examples";
 import { useSchedLab } from "../state/useSchedLab";
 
@@ -27,6 +28,7 @@ export function App() {
         <form noValidate onSubmit={app.run} className="mt-8 grid gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,27rem)_minmax(0,1fr)]">
           <div className="min-w-0">
             <ProcessEditor
+              workUnits={app.profile !== "SINGLE_CORE"}
               rows={app.rows}
               issues={app.issues}
               removed={app.removed}
@@ -52,6 +54,7 @@ export function App() {
             <ResultsSection view={app.view} />
           </div>
         </form>
+        <TopologySelector profile={app.profile} heuristic={app.heuristic} onProfile={app.changeProfile} onHeuristic={app.changeHeuristic} />
       </main>
       <LiveRegion message={app.liveMessage} />
     </div>

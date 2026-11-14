@@ -1,5 +1,6 @@
 import { formatAverage, formatTicks } from "../lib/format";
 import type { Schedule } from "../models/types";
+import { isHybridSchedule } from "../lib/hybridView";
 
 interface MetricsTableProps {
   schedule: Schedule;
@@ -9,11 +10,12 @@ const COLUMNS = ["Arrival", "Burst", "Priority", "Start", "Completion", "Waiting
 
 /** Table 1 and the averages, exactly as the core returned them; the only change is rounding for display. */
 export function MetricsTable({ schedule }: MetricsTableProps) {
+  const hybrid = isHybridSchedule(schedule);
   return (
     <div>
       {/* Outside the scrolling frame, so a narrow screen never clips the caption. */}
       <p id="results-caption" className="mb-2 font-serif text-sm">
-        <span className="font-semibold">Table 1.</span> Results by process, in input order. Times in ticks.
+        <span className="font-semibold">Table 1.</span> Results by process, in input order. {hybrid ? "Arrival and results in ticks; demand in work units." : "Times in ticks."}
       </p>
       {/* tabIndex makes the scrolling frame reachable by keyboard; the region name says what it holds. */}
       <div
@@ -28,7 +30,7 @@ export function MetricsTable({ schedule }: MetricsTableProps) {
               <th scope="col">PID</th>
               {COLUMNS.map((name) => (
                 <th key={name} scope="col">
-                  {name}
+                  {hybrid && name === "Burst" ? "Work" : name}
                 </th>
               ))}
             </tr>
