@@ -90,7 +90,7 @@ the browser. Core source and generated WASM did not change during P3.
 | `ctest --test-dir build/core --output-on-failure -C Release` | 15/15 passed |
 | `cmake -S native/windows-intel -B build/intel` and Release build | exit 0; warning-free MSVC build |
 | `ctest --test-dir build/intel --output-on-failure -C Release` | 9/9 passed |
-| `npm test` in web | 764/764 passed, 17 files |
+| `npm test` in web | 772/772 passed, 17 files |
 | `npm run typecheck` | exit 0 |
 | `npm run build` | exit 0 |
 | `npx playwright test --config .extension-config.ts` | 22/22 passed |
