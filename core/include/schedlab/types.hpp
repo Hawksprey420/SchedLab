@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "schedlab/topology.hpp"
 
 namespace schedlab {
 
@@ -55,6 +56,16 @@ struct ValidationError {
   std::size_t process_index;  // index into the input, or kWholeInput
   std::string field;          // "id", "arrival", "burst", "processes"
   std::string message;        // human-readable, names the offending value
+};
+
+struct HybridSchedule {
+  Schedule schedule;
+  Profile profile;
+  Algorithm algorithm;
+  Placement heuristic;
+  std::vector<Lane> lanes;
+  std::int64_t total_work;
+  std::int64_t energy_index;
 };
 
 }  // namespace schedlab

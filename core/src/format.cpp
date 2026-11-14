@@ -1,6 +1,7 @@
 #include "schedlab/format.hpp"
 
 #include <cstdio>
+#include "schedlab/text_io.hpp"
 
 namespace schedlab {
 namespace {
@@ -47,6 +48,20 @@ std::string format_errors(const std::vector<ValidationError>& errors) {
     text += "ERROR " + index + " " + error.field + " " + error.message + "\n";
   }
   return text;
+}
+
+std::string format_hybrid_schedule(const HybridSchedule& hybrid) {
+  std::string text = "MODE SIMULATED\nPROFILE " + profile_name(hybrid.profile) +
+    "\nALGORITHM " + (hybrid.algorithm == Algorithm::FCFS ? "FCFS" : "SJF_NON_PREEMPTIVE") +
+    "\nHEURISTIC " + placement_name(hybrid.heuristic) + "\n" + format_schedule(hybrid.schedule);
+  for (const auto& lane : hybrid.lanes) {
+    text += "LANE " + lane.core.id + " rate=" + std::to_string(lane.core.rate) +
+      " energyPerTick=" + std::to_string(lane.core.energy_per_tick) +
+      " busyTicks=" + std::to_string(lane.busy_ticks) +
+      " utilisation=" + four_decimals(lane.utilisation) + "\n";
+  }
+  return text + "TOTAL_WORK " + std::to_string(hybrid.total_work) +
+    "\nENERGY_INDEX " + std::to_string(hybrid.energy_index) + "\n";
 }
 
 }  // namespace schedlab

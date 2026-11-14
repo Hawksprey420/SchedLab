@@ -15,4 +15,7 @@ std::vector<ValidationError> validate(const std::vector<Process>& processes);
 // Throws std::invalid_argument (message = first validation error) on invalid input.
 Schedule simulate_single_core(const std::vector<Process>& processes, Algorithm algorithm);
 
+HybridSchedule simulate_hybrid(const std::vector<Process>& processes, Algorithm algorithm,
+                               Profile profile, Placement heuristic);
+
 }  // namespace schedlab
