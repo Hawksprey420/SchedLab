@@ -3,7 +3,7 @@
 **Project:** Interactive CPU Scheduling Algorithm Simulator with Heterogeneous-Core Demonstration  
 **Course:** Operating Systems — Final Project  
 **Deadline:** Sunday, 22 November 2026  
-**Status:** Implementation specification; no functionality is assumed to exist yet.  
+**Status:** P0, P2 and P3 implemented and merged; P1 playback and comparison not built. See section 12 for the checked list.  
 **Primary reference:** `Final Project OS.pdf` (2 pages).
 
 > **Implementation directive for coding agents:** Build the mandatory, fully tested FCFS and non-preemptive SJF simulator first. Do not start native Intel benchmarking, introduce authentication/databases, or rewrite the UI architecture until the P0 acceptance gate passes. The optional hybrid extension must never compromise the mandatory deliverable.
@@ -482,20 +482,52 @@ cmake --build build/intel --config Release
 
 ## 12. Submission checklist
 
-- [ ] FCFS non-preemptive is implemented and correctly tested.
-- [ ] SJF non-preemptive is implemented and correctly tested.
-- [ ] Inputs: PID, arrival, burst, priority; invalid cases rejected.
-- [ ] Each algorithm outputs a readable correct Gantt chart, with idle time if necessary.
-- [ ] Every process shows waiting, turnaround, completion and response times.
-- [ ] Average waiting and turnaround are correct.
-- [ ] CPU metrics and time units are explained without conflating simulation with physical performance.
-- [ ] Source code is documented, modular, reproducible, and committed.
-- [ ] PDF explains each algorithm and includes screenshots of the **actual implementation functions**.
-- [ ] PDF contains screenshots of actual program outputs.
-- [ ] PDF answers all five conclusion questions from `Final Project OS.pdf`.
-- [ ] Intel/Arm enhancements are labeled optional and educational.
-- [ ] Native measurements, if any, clearly distinguish measured data from modeled data.
-- [ ] Offline functionality and single group submission are verified before Nov 22.
+Status as of 14 November 2026 at `17773a9`. Evidence: `docs/p0-verification.md`,
+`docs/extension-verification.md`, `plans/checkpoint.md`.
+
+- [x] FCFS non-preemptive is implemented and correctly tested. (`core/src/fcfs.cpp`, `core/tests/test_fcfs.cpp`)
+- [x] SJF non-preemptive is implemented and correctly tested. (`core/src/sjf.cpp`, `core/tests/test_sjf.cpp`)
+- [x] Inputs: PID, arrival, burst, priority; invalid cases rejected. (core, WASM binding and UI)
+- [x] Each algorithm outputs a readable correct Gantt chart, with idle time if necessary.
+- [x] Every process shows waiting, turnaround, completion and response times.
+- [x] Average waiting and turnaround are correct. (T1 and T2 match section 8)
+- [x] CPU metrics and time units are explained without conflating simulation with physical performance.
+- [x] Source code is documented, modular, reproducible, and committed.
+- [x] PDF explains each algorithm and includes screenshots of the **actual implementation functions**. (`docs/final-report.pdf`)
+- [x] PDF contains screenshots of actual program outputs.
+- [ ] PDF answers all five conclusion questions from `Final Project OS.pdf`. (drafts are in the PDF; the group must revise them into its own words and fill in the `[GROUP MEMBER NAMES]` placeholder)
+- [x] Intel/Arm enhancements are labeled optional and educational.
+- [x] Native measurements, if any, clearly distinguish measured data from modeled data.
+- [ ] Offline functionality and single group submission are verified before Nov 22. (tests blocked external requests; a fully disconnected machine and the submission itself are not done)
+
+### Implementation status by tier
+
+| Tier | Status | Where |
+|---|---|---|
+| P0 required | Done, tagged `v0.1-required` | Pull requests 1 to 3 |
+| P1 play/pause/step, scrubber, comparison view | Not built (owner chose the P/E work first) | |
+| P1 presets, responsive UI, offline assets | Done | Pull request 3 |
+| P2 simulated Intel/Arm lanes | Done | Pull request 4 |
+| P3 native CPU Sets tool and trace import | Done | Pull request 5 |
+| PDF report | Generated; needs the group's edits | Pull request 6 |
+
+Latest suite results: core CTest 15 of 15, native CTest 9 of 9, Vitest 772 of 772,
+typecheck and build clean, Playwright 22 of 22 (Chromium only).
+
+### Differences from this plan
+
+- Section 3 files not created: `docs/architecture.md`, `docs/algorithms.md`,
+  `docs/test-cases.md` (their content is in `docs/core-contract.md`,
+  `docs/web-contract.md`, `docs/hybrid-contract.md` and the verification documents),
+  `docs/demo-script.md`, `examples/equal-bursts.json`,
+  `web/src/components/PlaybackControls.tsx`, `web/src/components/ComparisonPanel.tsx`.
+- `examples/sample-native-trace.json` became three files: topology, performance, efficient.
+- The generated WebAssembly module is committed at `web/src/wasm/schedlab.mjs`, not
+  ignored under `web/public/wasm/`.
+- `Process` has no `input_index` field; position in the input list is the tie-breaker.
+- The instructor's assignment PDF is kept out of the public repository.
+- Not verified: Firefox, Safari, physical touch devices, screen-reader speech, a fully
+  disconnected machine. No `v1.0-submission` tag or demo rehearsal yet.
 
 ## 13. Technical references
 
