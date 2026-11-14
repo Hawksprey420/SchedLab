@@ -18,7 +18,7 @@ function(native_warnings target)
   endif()
 endfunction()
 
-add_library(native_helpers STATIC src/arguments.cpp src/classification.cpp src/statistics.cpp)
+add_library(native_helpers STATIC src/arguments.cpp src/classification.cpp src/statistics.cpp src/json.cpp src/workload.cpp)
 target_include_directories(native_helpers PUBLIC include)
 native_warnings(native_helpers)
 
@@ -36,3 +36,13 @@ add_executable(test_statistics tests/test_statistics.cpp)
 target_link_libraries(test_statistics PRIVATE native_helpers)
 native_warnings(test_statistics)
 add_test(NAME native_statistics COMMAND test_statistics)
+
+add_executable(test_json tests/test_json.cpp)
+target_link_libraries(test_json PRIVATE native_helpers)
+native_warnings(test_json)
+add_test(NAME native_json COMMAND test_json)
+
+add_executable(test_workload tests/test_workload.cpp)
+target_link_libraries(test_workload PRIVATE native_helpers)
+native_warnings(test_workload)
+add_test(NAME native_workload COMMAND test_workload)
