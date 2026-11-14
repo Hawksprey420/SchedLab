@@ -15,6 +15,7 @@ for (const width of [375, 1280]) {
       await page.getByRole("button", { name: "Run simulation" }).click();
       await expect(page.getByText("schedule on one core.", { exact: false })).toBeVisible();
       await topology.selectOption("INTEL_6P_4E");
+      await expect(page.getByText("One row per process. Arrival is in ticks; burst is work units. Priority is recorded but not used by FCFS or SJF.", { exact: true })).toBeVisible();
       await expect(page.getByText("Experimental / simplified model", { exact: true })).toBeVisible();
       await expect(page.locator("[data-lane]")).toHaveCount(10);
       await expect(page.getByRole("columnheader", { name: "Work", exact: true })).toBeVisible();
@@ -28,6 +29,7 @@ for (const width of [375, 1280]) {
       await page.getByLabel("Placement heuristic").selectOption("ENERGY_FIRST");
       await expect(page.locator("dt", { hasText: "Energy index" }).locator("+ dd")).toHaveText("14");
       await topology.selectOption("ARM_1_3_4");
+      await expect(page.getByText("One row per process. Arrival is in ticks; burst is work units. Priority is recorded but not used by FCFS or SJF.", { exact: true })).toBeVisible();
       await expect(page.locator("[data-lane]")).toHaveCount(8);
       await page.getByRole("radio", { name: /Shortest job first/ }).check();
       await expect(page.locator("figcaption")).toContainText("SJF (non-preemptive) schedule, ARM_1_3_4");
@@ -36,6 +38,7 @@ for (const width of [375, 1280]) {
       await page.getByRole("button", { name: "Run simulation" }).click();
       await expect(page.locator("[data-lane]")).toHaveCount(8);
       await topology.selectOption("SINGLE_CORE");
+      await expect(page.getByText("One row per process. Arrival and burst are in ticks. Priority is recorded but not used by FCFS or SJF.", { exact: true })).toBeVisible();
       await expect(page.locator("[data-lane]")).toHaveCount(0);
       await expect(page.getByText("Experimental / simplified model", { exact: true })).toHaveCount(0);
       await expect(page.getByText("schedule on one core.", { exact: false })).toBeVisible();

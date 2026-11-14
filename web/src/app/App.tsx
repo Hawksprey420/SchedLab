@@ -28,6 +28,7 @@ export function App() {
         <form noValidate onSubmit={app.run} className="mt-8 grid gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,27rem)_minmax(0,1fr)]">
           <div className="min-w-0">
             <ProcessEditor
+              workUnits={app.profile !== "SINGLE_CORE"}
               rows={app.rows}
               issues={app.issues}
               removed={app.removed}
