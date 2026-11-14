@@ -9,7 +9,7 @@ let loading: Promise<SchedulerAdapter> | undefined;
  */
 export function loadWasmAdapter(): Promise<SchedulerAdapter> {
   loading ??= createSchedLabModule().then(
-    (module) => ({ simulate: module.simulate }),
+    (module) => ({ simulate: module.simulate, simulateHybrid: module.simulateHybrid }),
     (error: unknown) => {
       loading = undefined;
       throw error;

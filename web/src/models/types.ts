@@ -2,6 +2,8 @@
 // C++ core's data (see docs/web-contract.md); the UI never computes a schedule itself.
 
 export type Algorithm = "FCFS" | "SJF_NON_PREEMPTIVE";
+export type Profile = "SINGLE_CORE" | "INTEL_6P_4E" | "ARM_1_3_4";
+export type Placement = "FIRST_AVAILABLE" | "FASTEST_AVAILABLE" | "ENERGY_FIRST";
 
 export interface ProcessInput {
   id: string;
@@ -38,10 +40,32 @@ export interface Schedule {
 export interface ValidationError {
   /** Index into the input list; null when the error concerns the whole input. */
   processIndex: number | null;
-  field: "id" | "arrival" | "burst" | "priority" | "processes" | "algorithm";
+  field: "id" | "arrival" | "burst" | "priority" | "processes" | "algorithm" | "profile" | "heuristic";
   message: string;
 }
 
 export type SimulationOutcome =
   | { ok: true; schedule: Schedule }
+  | { ok: false; errors: ValidationError[] };
+
+export interface Lane {
+  coreId: string;
+  rate: number;
+  energyPerTick: number;
+  busyTicks: number;
+  utilisation: number;
+}
+
+export interface HybridSchedule extends Schedule {
+  mode: "SIMULATED";
+  profile: Profile;
+  algorithm: Algorithm;
+  heuristic: Placement;
+  lanes: Lane[];
+  totalWork: number;
+  energyIndex: number;
+}
+
+export type HybridSimulationOutcome =
+  | { ok: true; schedule: HybridSchedule }
   | { ok: false; errors: ValidationError[] };

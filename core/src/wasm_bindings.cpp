@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <exception>
 #include <limits>
+#include <initializer_list>
 #include <string>
 #include <utility>
 #include <vector>
@@ -112,6 +113,18 @@ bool parse_algorithm_id(const std::string& id, schedlab::Algorithm& out) {
   else if (id == "SJF_NON_PREEMPTIVE") out = schedlab::Algorithm::SJF_NON_PREEMPTIVE;
   else return false;
   return true;
+}
+
+std::string read_setting(const val& value, const char* field,
+                         std::initializer_list<const char*> allowed,
+                         std::vector<ValidationError>& errors) {
+  if (!value.isString()) {
+    errors.push_back(whole_input_error(field, std::string(field) + " must be a string"));
+    return {};
+  }
+  for (const auto* name : allowed) if (value.strictlyEquals(val(name))) return name;
+  errors.push_back(whole_input_error(field, std::string("unknown ") + field));
+  return {};
 }
 
 // ---- core -> JavaScript value ---------------------------------------------------------
@@ -221,6 +234,52 @@ val simulate(const val& processes, const val& algorithm_id) {
   }
 }
 
+val simulate_hybrid(const val& processes, const val& algorithm_id, const val& profile_id,
+                     const val& heuristic_id) {
+  try {
+    std::vector<ValidationError> errors;
+    const auto algorithm_name = read_setting(algorithm_id, "algorithm", {"FCFS", "SJF_NON_PREEMPTIVE"}, errors);
+    const auto profile_name = read_setting(profile_id, "profile", {"SINGLE_CORE", "INTEL_6P_4E", "ARM_1_3_4"}, errors);
+    const auto heuristic_name = read_setting(heuristic_id, "heuristic", {"FIRST_AVAILABLE", "FASTEST_AVAILABLE", "ENERGY_FIRST"}, errors);
+    const auto parsed = read_processes(processes, errors);
+    if (errors.empty()) errors = schedlab::validate(parsed);
+    if (!errors.empty()) return failure(errors);
+    schedlab::Algorithm algorithm{};
+    parse_algorithm_id(algorithm_name, algorithm);
+    const auto hybrid = schedlab::simulate_hybrid(parsed, algorithm,
+      *schedlab::parse_profile_name(profile_name), *schedlab::parse_placement_name(heuristic_name));
+    // All other returned integer fields are bounded by the checked input or makespan.
+    if (!is_exactly_representable(hybrid.schedule) ||
+        hybrid.total_work > schedlab::kMaxExactInteger || hybrid.energy_index > schedlab::kMaxExactInteger) {
+      return failure({whole_input_error("processes", "hybrid result exceeds the largest exactly representable number")});
+    }
+    val outcome = success(hybrid.schedule);
+    val js = outcome["schedule"];
+    js.set("mode", std::string("SIMULATED"));
+    js.set("profile", profile_name);
+    js.set("algorithm", algorithm_name);
+    js.set("heuristic", heuristic_name);
+    val lanes = val::array();
+    for (const auto& lane : hybrid.lanes) {
+      val item = val::object();
+      item.set("coreId", lane.core.id);
+      item.set("rate", static_cast<double>(lane.core.rate));
+      item.set("energyPerTick", static_cast<double>(lane.core.energy_per_tick));
+      item.set("busyTicks", static_cast<double>(lane.busy_ticks));
+      item.set("utilisation", lane.utilisation);
+      lanes.call<void>("push", item);
+    }
+    js.set("lanes", lanes);
+    js.set("totalWork", static_cast<double>(hybrid.total_work));
+    js.set("energyIndex", static_cast<double>(hybrid.energy_index));
+    return outcome;
+  } catch (const std::exception& error) {
+    return failure({whole_input_error("processes", error.what())});
+  } catch (...) {
+    return failure({whole_input_error("processes", "internal error while reading hybrid input")});
+  }
+}
+
 val run_text(const std::string& algorithm_name, const std::string& input) {
   val js = val::object();
   try {
@@ -234,9 +293,25 @@ val run_text(const std::string& algorithm_name, const std::string& input) {
   return js;
 }
 
+val run_hybrid_text(const std::string& algorithm, const std::string& profile,
+                     const std::string& heuristic, const std::string& input) {
+  val js = val::object();
+  try {
+    const auto run = schedlab::run_hybrid_text(algorithm, profile, heuristic, input);
+    js.set("exitCode", run.exit_code);
+    js.set("stdout", run.stdout_text);
+  } catch (...) {
+    js.set("exitCode", 70);
+    js.set("stdout", std::string());
+  }
+  return js;
+}
+
 }  // namespace
 
 EMSCRIPTEN_BINDINGS(schedlab) {
   emscripten::function("simulate", &simulate);
   emscripten::function("runText", &run_text);
+  emscripten::function("simulateHybrid", &simulate_hybrid);
+  emscripten::function("runHybridText", &run_hybrid_text);
 }
