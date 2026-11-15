@@ -16,8 +16,16 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
 const webDir = join(root, "web");
 const imgDir = join(here, "img");
-const reportHtml = join(here, "report.html");
-const pdfPath = join(root, "docs", "final-report.pdf");
+// Optional variant: `node docs/report/build-report.mjs student` reads report-student.html
+// and writes docs/final-report-student.pdf. Same images, same checks.
+const variant = process.argv[2] ? `-${process.argv[2]}` : "";
+const reportHtml = join(here, `report${variant}.html`);
+const pdfPath = join(root, "docs", `final-report${variant}.pdf`);
+// The repository is public, so the committed report keeps the names placeholder. When the
+// git-ignored names.local.txt exists (one name per line), a named copy is also written to
+// the git-ignored submission/ folder.
+const namesPath = join(here, "names.local.txt");
+const namedPdfPath = join(root, "submission", `final-report${variant}.pdf`);
 const cliPath = join(root, "build", "core", "Release", "schedlab-cli.exe");
 const PORT = Number(process.env.REPORT_PORT ?? 4178);
 const BASE = `http://127.0.0.1:${PORT}/`;
@@ -410,7 +418,11 @@ function checkReport(ranges) {
     "678.46", "828.32", "15 of 15", "772",
   ];
   for (const needle of must) check(text.includes(needle), `report text is missing "${needle}"`);
-  check(!/Lawrence/i.test(html), "report must not name Lawrence");
+  if (existsSync(namesPath)) {
+    for (const name of readFileSync(namesPath, "utf8").split(/\r?\n/).filter(Boolean)) {
+      check(!html.includes(name), `the committed report must not contain the name "${name}"`);
+    }
+  }
   check(!/[–—]/.test(text), "report text contains an em or en dash");
   check(!/\bAI\b|drafted|language model/i.test(text), "report text mentions AI or drafting");
   check(/<!--[^>]*revise[\s\S]*?-->/i.test(html), "the conclusion section lacks its HTML comment for the group");
@@ -423,7 +435,7 @@ function checkReport(ranges) {
   }
 }
 
-async function printPdf(browser) {
+async function printPdf(browser, outPath = pdfPath, names = null) {
   const context = await browser.newContext({ viewport: { width: 794, height: 1123 } });
   const page = await context.newPage();
   const external = [];
@@ -434,12 +446,19 @@ async function printPdf(browser) {
     return route.abort();
   });
   await page.goto(pathToFileURL(reportHtml).href);
+  if (names) {
+    await page.evaluate((list) => {
+      const el = document.querySelector(".members");
+      el.classList.remove("todo");
+      el.replaceChildren(...list.flatMap((name, i) => (i ? [document.createElement("br"), name] : [name])));
+    }, names);
+  }
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => Promise.all([...document.images].map((i) => i.decode())));
   await page.emulateMedia({ media: "print" });
   check(external.length === 0, `report requested network resources: ${external.join(", ")}`);
   await page.pdf({
-    path: pdfPath,
+    path: outPath,
     format: "A4",
     printBackground: true,
     displayHeaderFooter: true,
@@ -449,9 +468,9 @@ async function printPdf(browser) {
     margin: { top: "16mm", bottom: "18mm", left: "18mm", right: "18mm" },
   });
   await context.close();
-  const pdf = readFileSync(pdfPath);
+  const pdf = readFileSync(outPath);
   const pages = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length;
-  console.log(`wrote ${pdfPath}: ${pages} pages, ${pdf.length} bytes`);
+  console.log(`wrote ${outPath}: ${pages} pages, ${pdf.length} bytes`);
 }
 
 // ---------------------------------------------------------------- main
@@ -468,6 +487,10 @@ try {
   await captureCode(browser, ranges);
   checkReport(ranges);
   await printPdf(browser);
+  if (existsSync(namesPath)) {
+    mkdirSync(dirname(namedPdfPath), { recursive: true });
+    await printPdf(browser, namedPdfPath, readFileSync(namesPath, "utf8").split(/\r?\n/).filter(Boolean));
+  }
   console.log("done");
 } catch (error) {
   console.error(`build-report failed: ${error.message}`);
