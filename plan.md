@@ -495,7 +495,7 @@ Status as of 14 November 2026 at `17773a9`. Evidence: `docs/p0-verification.md`,
 - [x] Source code is documented, modular, reproducible, and committed.
 - [x] PDF explains each algorithm and includes screenshots of the **actual implementation functions**. (`docs/final-report.pdf`)
 - [x] PDF contains screenshots of actual program outputs.
-- [ ] PDF answers all five conclusion questions from `Final Project OS.pdf`. (drafts are in the PDF; the group must still revise the answers into its own words. Names are kept off this public repository: the build writes named copies to the git-ignored `submission/` folder)
+- [ ] PDF answers all five conclusion questions from `Final Project OS.pdf`. (drafts are in the PDF; the group must still revise the answers into its own words. The title page lists the four group members, as on the Bintanong thesis)
 - [x] Intel/Arm enhancements are labeled optional and educational.
 - [x] Native measurements, if any, clearly distinguish measured data from modeled data.
 - [ ] Offline functionality and single group submission are verified before Nov 22. (tests blocked external requests; a fully disconnected machine and the submission itself are not done)

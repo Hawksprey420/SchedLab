@@ -7,6 +7,3 @@ web/playwright-report/
 .vs/
 CMakeUserPresets.json
 web/.ui-check/
-# Group member names and the named PDFs stay off the public repository
-docs/report/names.local.txt
-submission/

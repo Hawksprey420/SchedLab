@@ -21,11 +21,6 @@ const imgDir = join(here, "img");
 const variant = process.argv[2] ? `-${process.argv[2]}` : "";
 const reportHtml = join(here, `report${variant}.html`);
 const pdfPath = join(root, "docs", `final-report${variant}.pdf`);
-// The repository is public, so the committed report keeps the names placeholder. When the
-// git-ignored names.local.txt exists (one name per line), a named copy is also written to
-// the git-ignored submission/ folder.
-const namesPath = join(here, "names.local.txt");
-const namedPdfPath = join(root, "submission", `final-report${variant}.pdf`);
 const cliPath = join(root, "build", "core", "Release", "schedlab-cli.exe");
 const PORT = Number(process.env.REPORT_PORT ?? 4178);
 const BASE = `http://127.0.0.1:${PORT}/`;
@@ -414,15 +409,12 @@ function checkReport(ranges) {
   const flat = html.replace(/<[^>]+>/g, "");
   for (const range of ranges) check(flat.includes(range), `report.html has no caption containing "${range}"`);
   const must = [
-    "[GROUP MEMBER NAMES]", "22 November 2026", "6.67", "11.33", "2.67", "7.33", "5.67", "10.33", "5.00", "9.67",
+    "Asag, Nestor Jann C.", "Clerigo, Darcy Jay T.", "Macanas, John Paul D.", "Magnetico, Lawrence F.",
+    "22 November 2026", "6.67", "11.33", "2.67", "7.33", "5.67", "10.33", "5.00", "9.67",
     "678.46", "828.32", "15 of 15", "772",
   ];
   for (const needle of must) check(text.includes(needle), `report text is missing "${needle}"`);
-  if (existsSync(namesPath)) {
-    for (const name of readFileSync(namesPath, "utf8").split(/\r?\n/).filter(Boolean)) {
-      check(!html.includes(name), `the committed report must not contain the name "${name}"`);
-    }
-  }
+  check(!html.includes("GROUP MEMBER NAMES"), "report still has the names placeholder");
   check(!/[–—]/.test(text), "report text contains an em or en dash");
   check(!/\bAI\b|drafted|language model/i.test(text), "report text mentions AI or drafting");
   check(/<!--[^>]*revise[\s\S]*?-->/i.test(html), "the conclusion section lacks its HTML comment for the group");
@@ -435,7 +427,7 @@ function checkReport(ranges) {
   }
 }
 
-async function printPdf(browser, outPath = pdfPath, names = null) {
+async function printPdf(browser, outPath = pdfPath) {
   const context = await browser.newContext({ viewport: { width: 794, height: 1123 } });
   const page = await context.newPage();
   const external = [];
@@ -446,13 +438,6 @@ async function printPdf(browser, outPath = pdfPath, names = null) {
     return route.abort();
   });
   await page.goto(pathToFileURL(reportHtml).href);
-  if (names) {
-    await page.evaluate((list) => {
-      const el = document.querySelector(".members");
-      el.classList.remove("todo");
-      el.replaceChildren(...list.flatMap((name, i) => (i ? [document.createElement("br"), name] : [name])));
-    }, names);
-  }
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => Promise.all([...document.images].map((i) => i.decode())));
   await page.emulateMedia({ media: "print" });
@@ -487,10 +472,6 @@ try {
   await captureCode(browser, ranges);
   checkReport(ranges);
   await printPdf(browser);
-  if (existsSync(namesPath)) {
-    mkdirSync(dirname(namedPdfPath), { recursive: true });
-    await printPdf(browser, namedPdfPath, readFileSync(namesPath, "utf8").split(/\r?\n/).filter(Boolean));
-  }
   console.log("done");
 } catch (error) {
   console.error(`build-report failed: ${error.message}`);
