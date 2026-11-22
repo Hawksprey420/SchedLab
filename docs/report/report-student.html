@@ -75,29 +75,26 @@ figcaption b{font-weight:700}
   <h1>SchedLab: CPU Scheduling Algorithm Simulator</h1>
   <p class="course">Operating Systems, Final Project</p>
   <p class="meta">Submission date: 22 November 2026</p>
-  <div class="members todo">[GROUP MEMBER NAMES]</div>
+  <div class="members">Asag, Nestor Jann C.<br>Clerigo, Darcy Jay T.<br>Macanas, John Paul D.<br>Magnetico, Lawrence F.</div>
 </header>
 
 <!-- 1 -->
 <h2>1 What we built</h2>
-<p>SchedLab is a CPU scheduling simulator. You type in a list of processes, pick an algorithm, press Run, and it shows you who gets the CPU and when. It supports the two algorithms the project asks for: first-come, first-served (FCFS) and shortest job first (SJF), both non-preemptive and both on a single CPU core.</p>
-<p>For each process you give a process ID, an arrival time, a burst time and a priority. The program then draws a Gantt chart and fills in a table with the start, completion, waiting, turnaround and response time of every process, plus the average waiting time, the average turnaround time and the makespan. Time is counted in whole "ticks". A tick is just one step of the simulation, not a real millisecond.</p>
+<p>SchedLab is a CPU scheduling simulator. You enter some processes, pick FCFS or SJF (both non-preemptive, one core), press Run, and it draws a Gantt chart and a results table: start, completion, waiting, turnaround and response time per process, plus the averages and the makespan. Time is in "ticks", which are just simulation steps, not milliseconds.</p>
 
-<h3>Words we use in this report</h3>
+<h3>Terms</h3>
 <dl class="terms">
-  <dt>Tick</dt><dd>One step of simulated time. It is not a real unit like a millisecond.</dd>
-  <dt>Arrival</dt><dd>The tick when a process shows up and is ready to run.</dd>
-  <dt>Burst</dt><dd>How many ticks of CPU the process needs. Since nothing is preempted, it uses them all in one go.</dd>
-  <dt>Start, completion</dt><dd>The tick when the process first gets the CPU, and the tick when it is done.</dd>
-  <dt>Waiting</dt><dd>start - arrival: how long the process sat ready but not running.</dd>
-  <dt>Turnaround</dt><dd>completion - arrival: the whole time from showing up to finishing.</dd>
-  <dt>Response</dt><dd>start - arrival: the time until the first run. Here it is always the same as waiting, because a process is never interrupted.</dd>
-  <dt>Makespan</dt><dd>The tick when the last process finishes. This is where the Gantt chart ends.</dd>
-  <dt>Idle</dt><dd>Ticks where the CPU has nothing to run because no process has arrived yet.</dd>
+  <dt>Arrival</dt><dd>When the process is ready to run.</dd>
+  <dt>Burst</dt><dd>How many ticks of CPU it needs.</dd>
+  <dt>Waiting</dt><dd>start - arrival.</dd>
+  <dt>Turnaround</dt><dd>completion - arrival.</dd>
+  <dt>Response</dt><dd>start - arrival. Same as waiting here, since nothing gets interrupted.</dd>
+  <dt>Makespan</dt><dd>When the last process finishes.</dd>
+  <dt>Idle</dt><dd>Ticks where nothing has arrived yet, so the CPU waits.</dd>
 </dl>
 
-<h3>How it is put together</h3>
-<p>We wrote the scheduling logic only once, in C++20, inside the <code>core/</code> folder. That same code is then used in two places. Compiled normally, it becomes a console program called <code>schedlab-cli</code> and a set of unit tests. Compiled with Emscripten, it becomes a WebAssembly module that runs inside the browser. The web page is made with React, and its only job is to collect the input and draw whatever the C++ code returns. The page does not do any scheduling by itself. It talks to the core through a small TypeScript interface called <code>SchedulerAdapter</code>.</p>
+<h3>How it fits together</h3>
+<p>We wrote the scheduling logic once, in C++20 (<code>core/</code>). Compiled normally, it gives a console program (<code>schedlab-cli</code>) and the unit tests. Compiled with Emscripten, it becomes WebAssembly that runs in the browser. The React page only collects input and draws results; it never schedules anything itself. It calls the core through a small TypeScript interface, <code>SchedulerAdapter</code>.</p>
 
 <figure id="fig-arch">
   <div class="diagram">
@@ -112,49 +109,43 @@ figcaption b{font-weight:700}
   <div class="diagram diagram2">
     <div class="box"><b>schedlab-cli and CTest executables</b>The same core, compiled natively. Text in, text out.</div>
   </div>
-  <figcaption>How SchedLab is put together. The browser and the console program run the same C++ code.</figcaption>
+  <figcaption>The browser and the console program run the same C++ code.</figcaption>
 </figure>
 
-<p>We did this so there is only one implementation to get right. To be sure the browser version and the console version really agree, we have a test for it (<code>web/tests/parity.test.ts</code>). It feeds the same inputs to both and fails if their outputs differ by even one character.</p>
-
-<p>Every run passes through one function, shown in <a class="ref" href="#fig-code-pipeline"></a>. It checks the input, cleans up the IDs, and asks the chosen algorithm for one thing only: <em>when</em> each process runs. The algorithm answers with a list of segments such as "P1 from 0 to 8". All the numbers in the results table are then worked out from those segments in <code>metrics.cpp</code>. This means FCFS and SJF share the exact same formulas, so they cannot disagree on how waiting time is computed.</p>
+<p>One implementation means one thing to get right. A test (<code>web/tests/parity.test.ts</code>) feeds the same inputs to the browser build and the console build and fails if the outputs differ at all.</p>
+<p>Every run goes through one function (<a class="ref" href="#fig-code-pipeline"></a>). It validates the input, asks the algorithm only <em>when</em> each process runs (a list of segments like "P1 from 0 to 8"), and then <code>metrics.cpp</code> computes every number from those segments. So FCFS and SJF share the same formulas.</p>
 
 <figure id="fig-code-pipeline">
   <div class="imgs"><img class="shot" src="img/code-pipeline.png" alt="Source of run_algorithm and simulate_single_core"></div>
-  <figcaption>The entry point. <code>core/src/scheduler.cpp</code>, lines 18 to 36: <code>run_algorithm</code> picks FCFS or SJF, <code>simulate_single_core</code> validates, trims and computes metrics.</figcaption>
+  <figcaption><code>core/src/scheduler.cpp</code>, lines 18 to 36: <code>run_algorithm</code> picks FCFS or SJF, <code>simulate_single_core</code> validates, trims and computes metrics.</figcaption>
 </figure>
 
-<h3>How to run it</h3>
-<p>You need Node.js with npm, CMake 3.20 or newer, and a C++20 compiler. Run these in PowerShell from the project folder.</p>
+<h3>Running it</h3>
+<p>You need Node.js, CMake 3.20+ and a C++20 compiler. From the project folder, in PowerShell:</p>
 <pre class="mono" style="font-size:8.6pt;line-height:1.35;margin:.2em 0 .7em;padding:.5em .8em;background:var(--plate);border:1px solid var(--rule);white-space:pre-wrap">cmake -S core -B build/core
 cmake --build build/core --config Release
 Set-Location web
 npm ci
 npm run dev                  # open the local URL that Vite prints
 
-# production build served locally
-npm run build
-npm run preview -- --host 127.0.0.1 --port 4173 --strictPort
-
 # console program (after the cmake build above)
 build\core\Release\schedlab-cli.exe &lt;fcfs|sjf&gt; &lt; input.txt</pre>
-<p>Once the dependencies are installed, the app does not need the internet. The fonts, the example workloads and the WebAssembly module are all served from your own machine.</p>
+<p>After installing, it works offline.</p>
 
 <!-- 2 -->
 <h2>2 Input and validation</h2>
 <table id="tab-fields">
-  <caption>Input fields. One row per process.</caption>
-  <thead><tr><th>Field</th><th>Meaning</th><th>What the editor accepts</th></tr></thead>
+  <caption>Input fields, one row per process.</caption>
+  <thead><tr><th>Field</th><th>Meaning</th><th>Accepted</th></tr></thead>
   <tbody>
-    <tr><td>PID</td><td>Process name shown on the chart</td><td>Not empty, unique (case-sensitive), and not the word <code>IDLE</code></td></tr>
-    <tr><td>Arrival</td><td>Tick when the process is ready</td><td>Whole number, 0 to 1,000,000</td></tr>
-    <tr><td>Burst</td><td>Ticks of CPU time needed</td><td>Whole number, 1 to 1,000,000</td></tr>
-    <tr><td>Priority</td><td>Saved and shown in the results</td><td>Whole number, -1000 to 1000</td></tr>
+    <tr><td>PID</td><td>Name on the chart</td><td>Not empty, unique, not <code>IDLE</code></td></tr>
+    <tr><td>Arrival</td><td>Tick it becomes ready</td><td>Whole number, 0 to 1,000,000</td></tr>
+    <tr><td>Burst</td><td>Ticks of CPU needed</td><td>Whole number, 1 to 1,000,000</td></tr>
+    <tr><td>Priority</td><td>Shown in results</td><td>Whole number, -1000 to 1000</td></tr>
   </tbody>
 </table>
-<p>About priority: the project brief lists it as an input, so we accept it and show it. But FCFS and SJF do not look at priority when choosing a process, so it has no effect on the schedule. The page says this next to the table, and we have a test (<code>priority_does_not_change_the_order</code>) that proves changing priorities changes nothing.</p>
-<p>A schedule can have 1 to 100 processes. Bad input such as an empty field, a negative number or a decimal like 2.5 is rejected with a message that points to the exact field. We never quietly turn a bad value into 0, because that would give a wrong chart that looks correct.</p>
-<p>The checking happens twice. The editor catches the simple things first (is it a whole number, is it in range). Then the C++ core checks everything again, including rules that need the whole table, like duplicate IDs and whether the total time still fits in a 64-bit integer. The core reports all the errors it finds, not just the first one, so you can fix everything in one pass.</p>
+<p>Priority is in the brief, so we accept it, but FCFS and SJF ignore it. A test (<code>priority_does_not_change_the_order</code>) checks that.</p>
+<p>A run takes 1 to 100 processes. Empty, negative or decimal values are rejected with a message on the exact field; we never silently turn them into 0. The editor catches format and range problems first, and the C++ core rechecks everything, including whole-table rules like duplicate IDs and 64-bit overflow. It reports all errors at once.</p>
 
 <figure id="fig-invalid">
   <div class="imgs">
@@ -162,18 +153,18 @@ build\core\Release\schedlab-cli.exe &lt;fcfs|sjf&gt; &lt; input.txt</pre>
     <img class="shot" src="img/invalid-summary.png" alt="Error summary listing two problems">
     <img class="shot" src="img/invalid-core.png" alt="Error summary for a duplicate process ID">
   </div>
-  <figcaption>The app rejecting bad input. Top and middle: arrival -1 in row 1 and burst 2.5 in row 2 are marked beside their fields and listed in the summary, and no chart is drawn. Bottom: after fixing the numbers, naming process 3 "P1" again is rejected by the core because the ID is a duplicate.</figcaption>
+  <figcaption>Bad input. Top and middle: arrival -1 and burst 2.5 are flagged and no chart is drawn. Bottom: a duplicate ID "P1" is rejected by the core.</figcaption>
 </figure>
 
 <figure id="fig-code-validate">
   <div class="imgs"><img class="shot" src="img/code-validate.png" alt="Source of validate"></div>
-  <figcaption>The validation function. <code>core/src/validate.cpp</code>, lines 95 to 109: <code>validate</code> collects every error before returning.</figcaption>
+  <figcaption><code>core/src/validate.cpp</code>, lines 95 to 109: <code>validate</code> collects every error before returning.</figcaption>
 </figure>
 
 <!-- 3 -->
 <h2>3 First-come, first-served (FCFS)</h2>
-<p><b>The idea.</b> FCFS is a queue, like lining up at a counter. Whoever arrives first is served first, and each process runs until it is finished. If two processes arrive at the same tick, the one listed first in the table goes first. If the CPU is free but the next process has not arrived yet, the CPU just waits (idle).</p>
-<p><b>How our code does it.</b> There are two small functions. <code>indices_by_arrival</code> (<a class="ref" href="#fig-code-fcfs-order"></a>) sorts the processes by arrival time using <code>std::stable_sort</code>. We picked a stable sort on purpose: it keeps the original order for processes with the same arrival, which is exactly the tie-break rule, so we get it for free. Then <code>fcfs_segments</code> (<a class="ref" href="#fig-code-fcfs"></a>) goes through that sorted list with a clock variable called <code>now</code>. For each process, if it has not arrived yet (<code>process.arrival &gt; now</code>), we record an idle segment and jump the clock forward. Then we record the process's run and add its burst to the clock.</p>
+<p><b>Idea.</b> A queue. First to arrive runs first, to completion. Same arrival? The one listed first wins. If the next process has not arrived, the CPU idles.</p>
+<p><b>Code.</b> <code>indices_by_arrival</code> (<a class="ref" href="#fig-code-fcfs-order"></a>) sorts by arrival with <code>std::stable_sort</code>. A stable sort keeps the original order on ties, so the tie-break comes for free. <code>fcfs_segments</code> (<a class="ref" href="#fig-code-fcfs"></a>) then walks that list with a clock <code>now</code>: if <code>process.arrival &gt; now</code>, record idle and jump ahead; then record the run and add the burst.</p>
 
 <figure id="fig-code-fcfs-order">
   <div class="imgs"><img class="shot" src="img/code-fcfs-order.png" alt="Source of indices_by_arrival"></div>
@@ -184,24 +175,23 @@ build\core\Release\schedlab-cli.exe &lt;fcfs|sjf&gt; &lt; input.txt</pre>
   <figcaption><code>core/src/fcfs.cpp</code>, lines 22 to 42: <code>fcfs_segments</code>, the FCFS algorithm.</figcaption>
 </figure>
 
-<p class="keep"><b>Tracing it by hand with T1.</b> Our first test case, T1, has three processes that all arrive at tick 0: P1 (burst 8), P2 (burst 4) and P3 (burst 2). Since the arrivals are equal, the order stays P1, P2, P3.</p>
+<p class="keep"><b>Trace: T1.</b> P1 (burst 8), P2 (burst 4), P3 (burst 2), all arriving at 0. Order stays P1, P2, P3.</p>
 <table id="tab-fcfs-walk">
   <caption>FCFS on T1, one loop pass per row. Times in ticks.</caption>
-  <thead><tr><th>Pass</th><th class="n">now before</th><th>Next in order</th><th>arrival &gt; now?</th><th>Segment recorded</th><th class="n">now after</th></tr></thead>
+  <thead><tr><th>Pass</th><th class="n">now before</th><th>Next</th><th>arrival &gt; now?</th><th>Segment</th><th class="n">now after</th></tr></thead>
   <tbody>
-    <tr><td>1</td><td class="n">0</td><td>P1 (arrival 0, burst 8)</td><td>no</td><td>P1 [0, 8)</td><td class="n">8</td></tr>
-    <tr><td>2</td><td class="n">8</td><td>P2 (arrival 0, burst 4)</td><td>no</td><td>P2 [8, 12)</td><td class="n">12</td></tr>
-    <tr><td>3</td><td class="n">12</td><td>P3 (arrival 0, burst 2)</td><td>no</td><td>P3 [12, 14)</td><td class="n">14</td></tr>
+    <tr><td>1</td><td class="n">0</td><td>P1 (0, 8)</td><td>no</td><td>P1 [0, 8)</td><td class="n">8</td></tr>
+    <tr><td>2</td><td class="n">8</td><td>P2 (0, 4)</td><td>no</td><td>P2 [8, 12)</td><td class="n">12</td></tr>
+    <tr><td>3</td><td class="n">12</td><td>P3 (0, 2)</td><td>no</td><td>P3 [12, 14)</td><td class="n">14</td></tr>
   </tbody>
 </table>
-<p>A note on the notation: [8, 12) means the process runs during ticks 8, 9, 10 and 11, and is finished at tick 12. From the segments, P1 waits 0, P2 waits 8 and P3 waits 12, so the average waiting time is 20 / 3 = 6.67 ticks. The turnaround times are 8, 12 and 14, which average to 34 / 3 = 11.33 ticks. You can see the app showing the same numbers in <a class="ref" href="#fig-t1-fcfs"></a>.</p>
-<p><b>What about idle time?</b> Take P1 (arrival 0, burst 1) and P2 (arrival 4, burst 2). After P1 finishes, the clock is at 1, but P2 only arrives at 4. Since 4 &gt; 1, the code records an idle segment [1, 4) and moves the clock to 4. P2 then runs [4, 6) and waits 0. The result is in <a class="ref" href="#fig-idle"></a>.</p>
+<p>[8, 12) means ticks 8 to 11, done at 12. Waiting is 0, 8, 12, so the average is 20 / 3 = 6.67 ticks. Turnaround is 8, 12, 14, average 34 / 3 = 11.33. Same as the app in <a class="ref" href="#fig-t1-fcfs"></a>.</p>
+<p><b>Idle.</b> P1 (0, 1) and P2 (4, 2): after P1 the clock is 1, but P2 arrives at 4, so we record idle [1, 4), then P2 runs [4, 6) with 0 waiting (<a class="ref" href="#fig-idle"></a>).</p>
 
 <!-- 4 -->
 <h2>4 Shortest job first, non-preemptive (SJF)</h2>
-<p><b>The idea.</b> Every time the CPU becomes free, SJF looks at the processes that have already arrived and picks the one with the shortest burst. If two have the same burst, the one that arrived earlier wins, and if that is also a tie, the one listed first wins. The chosen process runs until it finishes. Because our version is non-preemptive, a shorter process that arrives in the middle cannot cut in. It has to wait for the current one to finish.</p>
-<p><b>How our code does it.</b> Unlike FCFS, SJF cannot be solved with one sort at the start, because which processes are "available" depends on the current time. So <code>sjf_segments</code> (<a class="ref" href="#fig-code-sjf"></a>) uses a loop that repeats once per process. In each round it calls <code>pick_shortest_job</code> to get the best process that has arrived by <code>now</code>. If nothing has arrived, it jumps the clock to the next arrival (<code>earliest_unfinished_arrival</code>) and records an idle segment. Then it records the run, moves the clock forward and marks the process as finished.</p>
-<p>The comparison lives in <code>is_shorter_job</code>, which checks burst first and then arrival. The last tie-break (input order) is a small trick: <code>pick_shortest_job</code> scans the table from top to bottom and only swaps its choice when it finds a process that is <em>strictly</em> better, so on a full tie the earlier row stays (<a class="ref" href="#fig-code-sjf-pick"></a>). Scanning the whole table for every pick makes this O(n<sup>2</sup>). A priority queue would be faster, but with at most 100 processes the simple version is more than fast enough and easier to read.</p>
+<p><b>Idea.</b> Whenever the CPU is free, pick the shortest burst among processes that have arrived. Ties go to earlier arrival, then to the row listed first. The pick runs to completion; a shorter job arriving mid-run has to wait.</p>
+<p><b>Code.</b> SJF can't be one sort up front, because who is available depends on the time. <code>sjf_segments</code> (<a class="ref" href="#fig-code-sjf"></a>) loops once per process: <code>pick_shortest_job</code> finds the best arrived process at <code>now</code>; if none, the clock jumps to <code>earliest_unfinished_arrival</code> with an idle segment. <code>is_shorter_job</code> compares burst, then arrival. The last tie-break is a small trick: the scan goes top to bottom and only switches on a <em>strictly</em> better process, so on a full tie the earlier row stays (<a class="ref" href="#fig-code-sjf-pick"></a>). That's O(n<sup>2</sup>); a heap would be faster, but for 100 processes the simple version is plenty and easier to read.</p>
 
 <figure id="fig-code-sjf-pick">
   <div class="imgs"><img class="shot" src="img/code-sjf-pick.png" alt="Source of is_shorter_job, pick_shortest_job and earliest_unfinished_arrival"></div>
@@ -212,164 +202,147 @@ build\core\Release\schedlab-cli.exe &lt;fcfs|sjf&gt; &lt; input.txt</pre>
   <figcaption><code>core/src/sjf.cpp</code>, lines 42 to 69: <code>sjf_segments</code>, the SJF algorithm.</figcaption>
 </figure>
 
-<p class="keep"><b>Tracing it by hand with T2.</b> Our second test case is made to show non-preemption. T2 is P1 (arrival 0, burst 8), P2 (arrival 1, burst 4) and P3 (arrival 2, burst 2).</p>
+<p class="keep"><b>Trace: T2.</b> Built to show non-preemption: P1 (arrival 0, burst 8), P2 (1, 4), P3 (2, 2).</p>
 <table id="tab-sjf-walk">
   <caption>SJF on T2, one loop pass per row. Times in ticks.</caption>
-  <thead><tr><th>Pass</th><th class="n">now</th><th>Arrived and unfinished</th><th>Chosen</th><th>Segment recorded</th><th class="n">now after</th></tr></thead>
+  <thead><tr><th>Pass</th><th class="n">now</th><th>Arrived, unfinished</th><th>Chosen</th><th>Segment</th><th class="n">now after</th></tr></thead>
   <tbody>
     <tr><td>1</td><td class="n">0</td><td>P1</td><td>P1</td><td>P1 [0, 8)</td><td class="n">8</td></tr>
-    <tr><td>2</td><td class="n">8</td><td>P2 (burst 4), P3 (burst 2)</td><td>P3, the shorter</td><td>P3 [8, 10)</td><td class="n">10</td></tr>
+    <tr><td>2</td><td class="n">8</td><td>P2 (4), P3 (2)</td><td>P3</td><td>P3 [8, 10)</td><td class="n">10</td></tr>
     <tr><td>3</td><td class="n">10</td><td>P2</td><td>P2</td><td>P2 [10, 14)</td><td class="n">14</td></tr>
   </tbody>
 </table>
-<p>At tick 0 only P1 exists, so SJF has to pick it even though it is the longest job. P2 and P3 arrive at ticks 1 and 2 while P1 is still running. P3 only needs 2 ticks, but it cannot interrupt P1, so P1 keeps the CPU until tick 8. Only then does SJF compare P2 and P3 and pick the shorter one, P3. The waiting times are 0 (P1), 9 (P2) and 6 (P3), so the average waiting time is 15 / 3 = 5.00 ticks and the average turnaround is 29 / 3 = 9.67 ticks. The app output is in <a class="ref" href="#fig-t2-sjf"></a>. FCFS on the same input gives 5.67 and 10.33 (<a class="ref" href="#fig-t2-fcfs"></a>).</p>
+<p>At tick 0 only P1 exists, so it runs, and P3 can't cut in when it shows up at tick 2. At tick 8 SJF picks P3 over P2. Waiting is 0, 9, 6: average 15 / 3 = 5.00 ticks, turnaround 29 / 3 = 9.67 (<a class="ref" href="#fig-t2-sjf"></a>). FCFS on the same input gives 5.67 and 10.33 (<a class="ref" href="#fig-t2-fcfs"></a>).</p>
 
 <!-- 5 -->
 <h2>5 Metrics</h2>
-<p>All the numbers in the results table come from the segments, using the standard formulas:</p>
-<ul>
-  <li>start and completion: where the process's segment begins and ends</li>
-  <li>waiting = start - arrival</li>
-  <li>turnaround = completion - arrival</li>
-  <li>response = start - arrival (same as waiting here, since nothing is interrupted)</li>
-</ul>
-<p>For n processes, average waiting = (sum of waiting) / n, average turnaround = (sum of turnaround) / n, and makespan = the largest completion time. In the code, <code>record_start_and_completion</code> copies each segment's begin and end into its process, and <code>derive_waiting_turnaround_response</code> applies the three formulas (<a class="ref" href="#fig-code-metrics-derive"></a>). <code>compute_schedule_metrics</code> then adds them up and returns the averages and the makespan (<a class="ref" href="#fig-code-metrics"></a>).</p>
-<p>One technical detail: we do not just add everything into a <code>double</code> and divide. With very large times, the sum could overflow or lose precision. So the code adds up the integer quotient and remainder of each value divided by n, and converts to a decimal only once at the end. For normal small inputs like our test cases the answer is the same as plain division. The app shows two decimal places and <code>schedlab-cli</code> shows four.</p>
+<p>Everything comes from the segments: start and completion are where a segment begins and ends, then waiting = start - arrival, turnaround = completion - arrival, response = waiting. Averages are sums over n, and makespan is the largest completion. <code>record_start_and_completion</code> and <code>derive_waiting_turnaround_response</code> do the per-process part (<a class="ref" href="#fig-code-metrics-derive"></a>); <code>compute_schedule_metrics</code> does the totals (<a class="ref" href="#fig-code-metrics"></a>).</p>
+<p>One detail: we don't just sum into a <code>double</code>. Huge inputs could overflow or lose precision, so we add integer quotients and remainders of each value over n and convert once at the end. For small inputs it's the same as normal division. The app shows 2 decimals, the CLI 4.</p>
 
 <figure id="fig-code-metrics-derive">
   <div class="imgs"><img class="shot" src="img/code-metrics-derive.png" alt="Source of record_start_and_completion and derive_waiting_turnaround_response"></div>
-  <figcaption><code>core/src/metrics.cpp</code>, lines 23 to 47: <code>record_start_and_completion</code> and <code>derive_waiting_turnaround_response</code> (the three formulas).</figcaption>
+  <figcaption><code>core/src/metrics.cpp</code>, lines 23 to 47: <code>record_start_and_completion</code> and <code>derive_waiting_turnaround_response</code>.</figcaption>
 </figure>
 <figure id="fig-code-metrics">
   <div class="imgs"><img class="shot" src="img/code-metrics.png" alt="Source of compute_schedule_metrics"></div>
   <figcaption><code>core/src/metrics.cpp</code>, lines 68 to 93: <code>compute_schedule_metrics</code> returns results, averages and makespan.</figcaption>
 </figure>
 
-<p class="keep"><b>Sample computation: T2 under SJF.</b> From the trace above, the schedule is P1 [0, 8), P3 [8, 10), P2 [10, 14).</p>
 <table id="tab-worked">
-  <caption>Metrics for T2 under SJF. Times in ticks. These are the same values the app shows in <a class="ref" href="#fig-t2-sjf"></a>.</caption>
-  <thead><tr><th>PID</th><th class="n">Arrival</th><th class="n">Burst</th><th class="n">Start</th><th class="n">Completion</th><th class="n">Waiting = start - arrival</th><th class="n">Turnaround = completion - arrival</th><th class="n">Response</th></tr></thead>
+  <caption>T2 under SJF, computed by hand. Times in ticks. Matches <a class="ref" href="#fig-t2-sjf"></a>.</caption>
+  <thead><tr><th>PID</th><th class="n">Arrival</th><th class="n">Burst</th><th class="n">Start</th><th class="n">Completion</th><th class="n">Waiting</th><th class="n">Turnaround</th></tr></thead>
   <tbody>
-    <tr><td>P1</td><td class="n">0</td><td class="n">8</td><td class="n">0</td><td class="n">8</td><td class="n">0 - 0 = 0</td><td class="n">8 - 0 = 8</td><td class="n">0</td></tr>
-    <tr><td>P2</td><td class="n">1</td><td class="n">4</td><td class="n">10</td><td class="n">14</td><td class="n">10 - 1 = 9</td><td class="n">14 - 1 = 13</td><td class="n">9</td></tr>
-    <tr><td>P3</td><td class="n">2</td><td class="n">2</td><td class="n">8</td><td class="n">10</td><td class="n">8 - 2 = 6</td><td class="n">10 - 2 = 8</td><td class="n">6</td></tr>
-    <tr><td><b>Sum</b></td><td></td><td></td><td></td><td></td><td class="n"><b>15</b></td><td class="n"><b>29</b></td><td></td></tr>
+    <tr><td>P1</td><td class="n">0</td><td class="n">8</td><td class="n">0</td><td class="n">8</td><td class="n">0</td><td class="n">8</td></tr>
+    <tr><td>P2</td><td class="n">1</td><td class="n">4</td><td class="n">10</td><td class="n">14</td><td class="n">9</td><td class="n">13</td></tr>
+    <tr><td>P3</td><td class="n">2</td><td class="n">2</td><td class="n">8</td><td class="n">10</td><td class="n">6</td><td class="n">8</td></tr>
+    <tr><td><b>Sum</b></td><td></td><td></td><td></td><td></td><td class="n"><b>15</b></td><td class="n"><b>29</b></td></tr>
   </tbody>
 </table>
-<p>Average waiting = 15 / 3 = 5.00 ticks. Average turnaround = 29 / 3 = 9.67 ticks (the console prints 9.6667). Makespan = 14 ticks, which is when P2 finishes.</p>
 
 <!-- 6 -->
 <h2>6 Program output</h2>
-<p>These are screenshots of the actual running app. Each figure shows the Gantt chart first, then the results table with the averages. The small "Figure 1" and "Table 1" labels inside the screenshots are the app's own labels, not this report's numbering. When the input is not obvious from the chart, we show the input table first. <a class="ref" href="#tab-compare"></a> at the end puts all the averages side by side.</p>
+<p>Screenshots of the running app: chart first, then results. The "Figure 1" and "Table 1" labels inside them are the app's own. <a class="ref" href="#tab-compare"></a> sums it all up.</p>
 
 <figure id="fig-t1-fcfs">
   <div class="imgs">
     <img class="shot" src="img/workload-t1.png" alt="Workload T1">
     <img class="shot" src="img/out-t1-fcfs-chart.png" alt="T1 under FCFS, Gantt chart"><img class="shot" src="img/out-t1-fcfs-results.png" alt="T1 under FCFS, results">
   </div>
-  <figcaption>T1, P1 (0, 8), P2 (0, 4), P3 (0, 2), under FCFS. Order P1, P2, P3; waiting 0, 8, 12; average waiting 6.67 and average turnaround 11.33 ticks; makespan 14. This matches our hand computation.</figcaption>
+  <figcaption>T1 under FCFS. Order P1, P2, P3; average waiting 6.67, turnaround 11.33; makespan 14.</figcaption>
 </figure>
 <figure id="fig-t1-sjf">
   <div class="imgs"><img class="shot" src="img/out-t1-sjf-chart.png" alt="T1 under SJF, Gantt chart"><img class="shot" src="img/out-t1-sjf-results.png" alt="T1 under SJF, results"></div>
-  <figcaption>T1 under SJF. The order flips to P3, P2, P1; waiting 6, 2, 0; average waiting 2.67 and average turnaround 7.33 ticks; makespan 14.</figcaption>
+  <figcaption>T1 under SJF. Order flips to P3, P2, P1; average waiting 2.67, turnaround 7.33; makespan 14.</figcaption>
 </figure>
 <figure id="fig-t2-fcfs">
   <div class="imgs">
     <img class="shot" src="img/workload-t2.png" alt="Workload T2">
     <img class="shot" src="img/out-t2-fcfs-chart.png" alt="T2 under FCFS, Gantt chart"><img class="shot" src="img/out-t2-fcfs-results.png" alt="T2 under FCFS, results">
   </div>
-  <figcaption>T2, P1 (0, 8), P2 (1, 4), P3 (2, 2), under FCFS. Order P1, P2, P3; waiting 0, 7, 10; average waiting 5.67 and average turnaround 10.33 ticks; makespan 14.</figcaption>
+  <figcaption>T2 under FCFS. Order P1, P2, P3; average waiting 5.67, turnaround 10.33; makespan 14.</figcaption>
 </figure>
 <figure id="fig-t2-sjf">
   <div class="imgs"><img class="shot" src="img/out-t2-sjf-chart.png" alt="T2 under SJF, Gantt chart"><img class="shot" src="img/out-t2-sjf-results.png" alt="T2 under SJF, results"></div>
-  <figcaption>T2 under SJF. P1 keeps the CPU even after the shorter P3 arrives, so the order is P1, P3, P2; waiting 0, 9, 6; average waiting 5.00 and average turnaround 9.67 ticks; makespan 14.</figcaption>
+  <figcaption>T2 under SJF. P1 keeps the CPU, so the order is P1, P3, P2; average waiting 5.00, turnaround 9.67; makespan 14.</figcaption>
 </figure>
 <figure id="fig-idle">
   <div class="imgs">
     <img class="shot" src="img/workload-idle.png" alt="Workload with a CPU idle gap">
     <img class="shot" src="img/out-idle-fcfs-chart.png" alt="Idle case under FCFS, Gantt chart"><img class="shot" src="img/out-idle-fcfs-results.png" alt="Idle case under FCFS, results">
   </div>
-  <figcaption>The idle case, P1 (0, 1) and P2 (4, 2), under FCFS. P1 [0, 1), idle [1, 4), P2 [4, 6); waiting 0 and 0; average waiting 0.00 and average turnaround 1.50 ticks; makespan 6. SJF gives the same schedule here.</figcaption>
+  <figcaption>Idle case under FCFS: P1 [0, 1), idle [1, 4), P2 [4, 6); average waiting 0.00, turnaround 1.50; makespan 6. SJF gives the same.</figcaption>
 </figure>
 
 <h3>Console program</h3>
-<p>The same core also runs as a plain console program. <code>schedlab-cli</code> reads one process per line in the form <code>id arrival burst priority</code> and prints the segments, the per-process results, the averages (four decimals) and the makespan. <a class="ref" href="#fig-cli"></a> shows the real output for T2 under SJF. The numbers are the same as in <a class="ref" href="#fig-t2-sjf"></a>, which is what we expect since both use the same C++ code.</p>
+<p><code>schedlab-cli</code> reads lines of <code>id arrival burst priority</code> and prints segments, results, averages and makespan. Same numbers as the app (<a class="ref" href="#fig-cli"></a>), since it's the same code.</p>
 <figure id="fig-cli">
   <div class="imgs"><img class="shot" src="img/cli-t2-sjf.png" alt="Console output of schedlab-cli for T2 under SJF"></div>
-  <figcaption>Console output for T2 under SJF, from <code>build\core\Release\schedlab-cli.exe</code> with the input file shown above the output.</figcaption>
+  <figcaption>Console output for T2 under SJF, from <code>build\core\Release\schedlab-cli.exe</code>.</figcaption>
 </figure>
 
 <table id="tab-compare">
-  <caption>FCFS and SJF side by side on our test cases. Times in ticks.</caption>
-  <thead><tr><th>Workload</th><th>Algorithm</th><th>Run order</th><th class="n">Average waiting</th><th class="n">Average turnaround</th><th class="n">Makespan</th></tr></thead>
+  <caption>FCFS vs SJF on our test cases. Times in ticks.</caption>
+  <thead><tr><th>Workload</th><th>Algorithm</th><th>Order</th><th class="n">Avg waiting</th><th class="n">Avg turnaround</th><th class="n">Makespan</th></tr></thead>
   <tbody>
     <tr><td rowspan="2">T1: P1 (0, 8), P2 (0, 4), P3 (0, 2)</td><td>FCFS</td><td>P1, P2, P3</td><td class="n">6.67</td><td class="n">11.33</td><td class="n">14</td></tr>
     <tr><td>SJF</td><td>P3, P2, P1</td><td class="n">2.67</td><td class="n">7.33</td><td class="n">14</td></tr>
     <tr><td rowspan="2">T2: P1 (0, 8), P2 (1, 4), P3 (2, 2)</td><td>FCFS</td><td>P1, P2, P3</td><td class="n">5.67</td><td class="n">10.33</td><td class="n">14</td></tr>
     <tr><td>SJF</td><td>P1, P3, P2</td><td class="n">5.00</td><td class="n">9.67</td><td class="n">14</td></tr>
-    <tr><td>Idle case: P1 (0, 1), P2 (4, 2)</td><td>FCFS and SJF</td><td>P1, idle, P2</td><td class="n">0.00</td><td class="n">1.50</td><td class="n">6</td></tr>
+    <tr><td>Idle: P1 (0, 1), P2 (4, 2)</td><td>Both</td><td>P1, idle, P2</td><td class="n">0.00</td><td class="n">1.50</td><td class="n">6</td></tr>
   </tbody>
 </table>
 
 <!-- 7 -->
 <h2>7 Testing</h2>
-<p>We did not want to rely on "it looks right on screen", so the project has automated tests at each level. The results below are from a run on 14 November 2026 on Windows 11.</p>
+<p>We didn't want to trust "looks right on screen", so there are automated tests at every level. Run on 14 November 2026, Windows 11:</p>
 <table id="tab-tests">
   <caption>Test runs.</caption>
-  <thead><tr><th>What is tested</th><th>Command</th><th>Result</th></tr></thead>
+  <thead><tr><th>What</th><th>Command</th><th>Result</th></tr></thead>
   <tbody>
-    <tr><td>C++ core (algorithms, metrics, validation)</td><td><code>ctest --test-dir build/core --output-on-failure -C Release</code></td><td>15 of 15 passed</td></tr>
-    <tr><td>Windows tool (optional extra)</td><td><code>ctest --test-dir build/intel --output-on-failure -C Release</code></td><td>9 of 9 passed</td></tr>
-    <tr><td>Web unit tests and the browser-vs-console comparison</td><td><code>npm test</code> in <code>web/</code></td><td>772 tests passed, 17 test files</td></tr>
-    <tr><td>TypeScript type check</td><td><code>npm run typecheck</code> in <code>web/</code></td><td>no errors</td></tr>
-    <tr><td>Tests that click through the real app in a browser</td><td><code>npm run test:e2e</code> in <code>web/</code></td><td>22 passed (Chromium)</td></tr>
+    <tr><td>C++ core</td><td><code>ctest --test-dir build/core -C Release</code></td><td>15 of 15 passed</td></tr>
+    <tr><td>Windows tool (optional)</td><td><code>ctest --test-dir build/intel -C Release</code></td><td>9 of 9 passed</td></tr>
+    <tr><td>Web unit + browser-vs-console</td><td><code>npm test</code></td><td>772 passed</td></tr>
+    <tr><td>Type check</td><td><code>npm run typecheck</code></td><td>no errors</td></tr>
+    <tr><td>Clicking through the real app</td><td><code>npm run test:e2e</code></td><td>22 passed (Chromium)</td></tr>
   </tbody>
 </table>
-<p><b>What the tests check.</b> The core tests compare the exact segments, per-process numbers and averages for T1 and T2 under both algorithms against values we computed by hand. They also cover the tricky cases: idle time at the start and in the middle, processes with identical values, a single process, input that is not sorted by arrival, every tie-break rule, and every validation rule. Some tests generate many random workloads and check things that must always be true, for example that no two segments overlap, that every process runs exactly once, and that waiting time is never negative. The browser tests run T1 and T2 on a phone-sized and a desktop-sized window, try bad input, and load the app with the network blocked to confirm it works offline.</p>
-<p><b>What we did not test.</b> We only tested on Chromium, not Firefox or Safari. We did not test on a real phone or with a screen reader. For the optional Windows tool, we only have measurements from one laptop.</p>
+<p>The core tests check T1 and T2 against our hand-computed values, plus the edge cases: idle gaps, ties, one process, unsorted input, every validation rule. Random-workload tests check things that must always hold (no overlapping segments, every process runs once, no negative waiting). Browser tests cover phone and desktop widths, bad input, and loading with the network blocked. Not tested: Firefox, Safari, real phones, screen readers.</p>
 
 <!-- 8 -->
 <h2>8 Optional extras</h2>
 <div class="optional">
-<p><b>These two extras are optional and for learning only.</b> They are not part of the graded FCFS and SJF simulator, which stays the default mode. They do not change how FCFS or SJF work.</p>
+<p><b>Optional, for learning only.</b> Not part of the graded simulator, which stays the default, and they don't change FCFS or SJF.</p>
 </div>
 
 <h3>8.1 Simulated multi-core mode</h3>
-<p>Modern laptop CPUs do not have identical cores anymore. Intel mixes fast P-cores with slower, power-saving E-cores, and Arm phones do something similar. We were curious how that would look on a Gantt chart, so we added a mode where you can switch from one core to an Intel-style layout (6 P-cores and 4 E-cores, ten lanes) or an Arm-style layout (1 Prime, 3 Big and 4 LITTLE cores, eight lanes).</p>
-<p>In this mode, FCFS or SJF still decides which process goes next, and a second rule decides which free core it goes to. The burst is treated as an amount of work, and a process takes ceil(work / core speed) ticks, so the same job finishes sooner on a faster core. The results are clearly marked <code>SIMULATED</code> and <code>Experimental / simplified model</code>.</p>
+<p>Newer CPUs mix fast and power-saving cores (Intel P- and E-cores, Arm big.LITTLE), so we added a mode that swaps the single core for an Intel-style layout (6 P + 4 E, ten lanes) or an Arm-style one (1 + 3 + 4, eight lanes). FCFS or SJF still picks the next process; a second rule picks the core. A job takes ceil(work / core speed) ticks. Results are labelled <code>SIMULATED</code> and <code>Experimental / simplified model</code>.</p>
 <ul>
-  <li>The Intel layout has ten lanes because the CPU it copies (i7-12650H) has 10 physical cores. Windows shows 16 logical processors for it only because each P-core runs two threads.</li>
-  <li>The speeds (P-core 2, E-core 1) and energy costs per tick (P-core 3, E-core 1) are numbers we made up for teaching. They are not measurements of a real CPU.</li>
-  <li>The "energy index" is busy ticks times that made-up energy cost. It is not watts or battery life.</li>
+  <li>Ten Intel lanes because the i7-12650H has 10 physical cores (16 threads, since P-cores run two each).</li>
+  <li>Speeds (P 2, E 1) and energy costs (P 3, E 1) are made up for teaching, not measured.</li>
+  <li>The energy index is busy ticks times that cost. Not watts.</li>
 </ul>
-<p>As an example, T1 under FCFS with the default placement finishes at tick 8 with an energy index of 14. If we place each process on the fastest free core instead (<a class="ref" href="#fig-hybrid"></a>), all three run on P-cores, the makespan drops to 4 ticks and the energy index rises to 21. So the model shows the basic trade-off: faster cores finish earlier but cost more energy. The exact values only mean as much as the made-up rates do.</p>
+<p>T1 under FCFS with default placement ends at tick 8 with energy 14. Fastest-core placement (<a class="ref" href="#fig-hybrid"></a>) puts everything on P-cores: makespan 4, energy 21. Faster, but costs more.</p>
 <figure id="fig-hybrid">
   <div class="imgs"><img class="shot" src="img/hybrid-intel.png" alt="Intel-style ten-lane Gantt chart"></div>
-  <figcaption>Simulated Intel-style mode, T1 under FCFS with the fastest-available placement. Ten lanes, P0 to P5 and E0 to E3. Makespan 4 ticks, energy index 21 (made-up units).</figcaption>
+  <figcaption>Intel-style mode, T1 under FCFS, fastest-core placement. Makespan 4, energy index 21 (made-up units).</figcaption>
 </figure>
 
-<h3>8.2 Measuring real P-cores and E-cores on Windows</h3>
-<p>The simulation above uses invented numbers, so we also tried measuring the real thing. <code>schedlab-intel.exe</code> (in <code>native/windows-intel</code>) is a small separate C++ program for Windows. It asks Windows which kinds of cores the machine has, then runs a fixed piece of work on one thread while asking Windows to keep that thread on either the fastest or the most power-saving kind of core. This uses a Windows feature called CPU Sets. The tool saves its timings to a JSON file, and the web app can open that file and show it in a separate <b>Native measured</b> panel. These are real milliseconds, so the app never mixes them into the tick-based Gantt chart.</p>
-<p>We ran it on 14 November 2026 on a 12th Gen Intel Core i7-12650H laptop on the Balanced power plan. Each test did one warm-up run and then three timed runs of 400,000,000 loop iterations. Every run produced the same checksum (51001733377), which confirms each run did the same work.</p>
+<h3>8.2 Measuring real P- and E-cores on Windows</h3>
+<p>Since the numbers above are invented, we also measured. <code>schedlab-intel.exe</code> (<code>native/windows-intel</code>) is a small Windows C++ tool. It asks Windows for the core types, then runs fixed work on one thread while asking Windows (via CPU Sets) to keep it on the fastest or most power-saving cores. It saves timings as JSON, which the app shows in a separate <b>Native measured</b> panel, in real milliseconds, never mixed into the tick chart.</p>
+<p>Run on 14 November 2026, i7-12650H laptop, Balanced power plan: one warm-up, then three runs of 400,000,000 iterations. Every run gave checksum 51001733377, so the work was identical.</p>
 <table id="tab-native">
-  <caption>Timed runs from the sample files under <code>examples/</code>. Times in milliseconds.</caption>
-  <thead><tr><th>Requested core type</th><th class="n">Run 1</th><th class="n">Run 2</th><th class="n">Run 3</th><th class="n">Median</th><th class="n">Min to max</th><th>Times the thread was seen on the requested type (per run, of 382 checks)</th></tr></thead>
+  <caption>Timed runs from the sample files under <code>examples/</code>. Milliseconds.</caption>
+  <thead><tr><th>Requested</th><th class="n">Run 1</th><th class="n">Run 2</th><th class="n">Run 3</th><th class="n">Median</th><th>On requested type (of 382 checks)</th></tr></thead>
   <tbody>
-    <tr><td>performance</td><td class="n">678.4595</td><td class="n">668.6926</td><td class="n">689.6459</td><td class="n">678.4595</td><td class="n">668.6926 to 689.6459</td><td>382, 382, 382</td></tr>
-    <tr><td>efficient</td><td class="n">838.2289</td><td class="n">795.0416</td><td class="n">828.3228</td><td class="n">828.3228</td><td class="n">795.0416 to 838.2289</td><td>365, 310, 365</td></tr>
+    <tr><td>performance</td><td class="n">678.4595</td><td class="n">668.6926</td><td class="n">689.6459</td><td class="n">678.4595</td><td>382, 382, 382</td></tr>
+    <tr><td>efficient</td><td class="n">838.2289</td><td class="n">795.0416</td><td class="n">828.3228</td><td class="n">828.3228</td><td>365, 310, 365</td></tr>
   </tbody>
 </table>
 <figure id="fig-native">
   <div class="imgs"><img class="shot" src="img/native-measured.png" alt="Native measured panel with the efficient-class sample"></div>
-  <figcaption>The Native measured panel showing the efficient-core sample. The app warns that the thread was sometimes seen outside the requested core type.</figcaption>
+  <figcaption>The Native measured panel. It warns that the thread was sometimes off the requested core type.</figcaption>
 </figure>
-<p>Rounded to two decimals, the medians are 678.46 ms when we asked for performance cores and 828.32 ms when we asked for efficient cores.</p>
-<p><b>How much can we trust this?</b> The performance request behaved well: the thread was on a P-core in all 382 checks of every run. The efficient request did not fully hold. The thread was on an E-core in only 365, 310 and 365 of 382 checks, so part of that time was actually spent on other cores. Because of that, we cannot honestly say "E-cores are X% slower than P-cores" from these numbers, and we do not claim it. Other limits:</p>
-<ul>
-  <li>CPU Sets are a request to Windows, not a guarantee. Windows and other running programs still affect where the thread runs.</li>
-  <li>We did not control background programs, temperature or power settings.</li>
-  <li>This is one kind of workload, on one laptop, with three runs. Another computer may behave differently.</li>
-</ul>
+<p>Medians: 678.46 ms (performance), 828.32 ms (efficient). The performance request held every time; the efficient one didn't (365, 310, 365 of 382), so we can't claim an exact P vs E speed ratio, and we don't. CPU Sets are a request, not a guarantee, and we didn't control background apps, heat or power. One workload, one laptop, three runs.</p>
 
 <!-- 9 -->
 <h2>9 Conclusion questions</h2>
@@ -377,49 +350,48 @@ build\core\Release\schedlab-cli.exe &lt;fcfs|sjf&gt; &lt; input.txt</pre>
 
 <p class="question">1. Among the scheduling algorithms you implemented (FCFS, SJF), which one performed the best in terms of average waiting time and turnaround time? Explain why.</p>
 <div class="answer" id="q1">
-<p>SJF did better on both, in both of our test cases. In T1 every process arrives at tick 0, so the only thing that changes is the order. FCFS runs P1, P2, P3 and gets an average waiting time of 6.67 ticks and an average turnaround of 11.33. SJF runs P3, P2, P1 and gets 2.67 and 7.33.</p>
-<p>The reason is easy to see once you count who waits for whom. Whatever runs first is waited on by everyone behind it. FCFS puts the 8-tick P1 in front, so P2 and P3 both sit through it and wait 8 and 12 ticks. SJF puts P1 last, so nobody waits for it. The total work does not change, since both finish at tick 14.</p>
-<p>In T2 the gap is smaller: 5.67 against 5.00 for waiting and 10.33 against 9.67 for turnaround. P1 was alone at tick 0 and cannot be interrupted once it starts. SJF is also not better for every process, because P2 waits 9 ticks under SJF but only 7 under FCFS. Our simulator also knows every burst ahead of time, while a real OS has to guess.</p>
+<p>SJF won on both, in both test cases. In T1 everything arrives at tick 0, so only the order changes. FCFS runs P1, P2, P3 and gets 6.67 ticks average waiting and 11.33 turnaround. SJF runs P3, P2, P1 and gets 2.67 and 7.33.</p>
+<p>It comes down to who waits for whom. Whatever runs first is waited on by everyone behind it. FCFS puts the 8-tick P1 up front, so P2 and P3 sit through it and wait 8 and 12. SJF puts P1 last, so nobody waits on it. Total work is the same; both end at tick 14.</p>
+<p>In T2 the gap is smaller (5.67 vs 5.00 waiting, 10.33 vs 9.67 turnaround) because P1 was alone at tick 0 and can't be interrupted. SJF also isn't better for everyone: P2 waits 9 under SJF and 7 under FCFS. And our simulator knows every burst in advance, which a real OS doesn't.</p>
 </div>
 
 <p class="question">2. How does the arrival time of processes affect the fairness and efficiency of each scheduling algorithm? Provide an example based on your test cases.</p>
 <div class="answer" id="q2">
-<p>Arrival time decides who is actually in the ready queue when the CPU becomes free, so it affects both algorithms. FCFS only looks at arrival. That feels fair because nobody gets overtaken, but a short job that comes late still waits behind long ones. In T2, P3 arrives at tick 2 needing only 2 ticks, and it waits 10 ticks, the longest wait in that run.</p>
-<p>SJF depends on arrival even more. At tick 0 only P1 was there, so SJF had no real choice, and since it is non-preemptive P1 held the CPU until tick 8. Only then could it pick P3 over P2. P3's wait dropped from 10 to 6, but P2's went up from 7 to 9. SJF's lead in average waiting time shrank from 4.00 ticks in T1 to 0.67 in T2, just because the arrivals were spread out.</p>
-<p>Arrival also decides if the CPU sits idle. With P1 (0, 1) and P2 (4, 2), the CPU is idle during [1, 4) under both algorithms. Both give an average waiting of 0.00 and a turnaround of 1.50. When there is only one process to choose from, the algorithm does not matter.</p>
+<p>Arrival time decides who is actually ready when the CPU frees up. FCFS only looks at arrival, which feels fair since nobody gets overtaken, but a short job that shows up late still waits behind long ones. In T2, P3 arrives at tick 2 needing just 2 ticks and waits 10, the longest wait in that run.</p>
+<p>SJF depends on arrival even more. At tick 0 only P1 was there, so SJF had no choice, and since it can't preempt, P1 held the CPU until tick 8. Then it picked P3 over P2: P3's wait dropped from 10 to 6, but P2's rose from 7 to 9. SJF's lead in average waiting shrank from 4.00 ticks in T1 to 0.67 in T2, just because arrivals were spread out.</p>
+<p>Arrival also decides idle time. With P1 (0, 1) and P2 (4, 2), the CPU idles during [1, 4) under both, and both give 0.00 waiting and 1.50 turnaround. With only one choice, the algorithm doesn't matter.</p>
 </div>
 
 <p class="question">3. Which algorithm was the most challenging to implement and why? What concept or logic made it difficult?</p>
 <div class="answer" id="q3">
-<p>SJF was harder than FCFS. FCFS is basically one stable sort by arrival and then a single loop with a clock. SJF cannot be done with one sort, because the list of processes you can choose from changes as time moves. The code has to pick one, run it, move the clock, then pick again, and a few details have to be right at the same time.</p>
-<p>The first is idle time. If nothing has arrived yet, the clock has to jump to the next arrival and an idle segment has to be recorded, or else the loop has nothing to pick. The second is tie-breaking: same burst goes to the earlier arrival, then to the one listed first. We handle the last rule by scanning in input order and only replacing the choice when another process is strictly better. The third is non-preemption. The scheduler must not choose again when a shorter process arrives in the middle of a run, and T2 is there to check that.</p>
-<p>Outside the algorithms, the hardest part was making the browser version and the console version give identical results. JavaScript stores numbers as doubles, so we had to limit the integer range and compute the averages carefully.</p>
+<p>SJF. FCFS is basically one stable sort plus one loop with a clock. SJF can't be a single sort because the set of choices changes as time moves, so the code has to pick, run, move the clock and pick again, and three details have to be right together.</p>
+<p>First, idle time: if nothing has arrived, the clock has to jump to the next arrival and record an idle segment, or the loop has nothing to pick. Second, tie-breaking: same burst goes to the earlier arrival, then the row listed first, which we get by scanning in order and only switching on a strictly better process. Third, non-preemption: the scheduler must not re-pick when a shorter job arrives mid-run, and T2 exists to check exactly that.</p>
+<p>Outside the algorithms, the hardest part was making the browser and console builds match exactly. JavaScript numbers are doubles, so we had to cap the integer range and compute averages carefully.</p>
 </div>
 
 <p class="question">4. If you were to improve your simulator, what additional features or enhancements would you add to make it more useful or realistic for OS learning?</p>
 <div class="answer" id="q4">
-<p>First, we would add the algorithms that the project did not require: shortest remaining time first (the preemptive version of SJF), round robin with a time quantum you can set, and priority scheduling, which would finally use the priority field that we currently store but ignore. T2 shows why this matters. SJF cannot let P3 run at tick 2, but a preemptive version could. Seeing both on one chart would show what preemption gains and what it costs.</p>
-<p>Second, a step-by-step playback and a side-by-side comparison view. Right now you have to switch algorithms and compare two screens yourself. Watching the queue change one tick at a time would make things like the convoy effect much easier to see.</p>
-<p>Third, we would make it more realistic. Real processes alternate between CPU bursts and I/O, and switching between processes takes time, so adding I/O bursts and a context-switch cost would change which algorithm wins. A random workload generator, CSV export, and extra numbers such as CPU utilization and throughput would also help with bigger experiments.</p>
+<p>First, the algorithms the project didn't require: shortest remaining time first (preemptive SJF), round robin with an adjustable quantum, and priority scheduling, which would finally use the priority field we store but ignore. T2 shows why: SJF can't let P3 run at tick 2, a preemptive version could, and seeing both on one chart would show what preemption gains and costs.</p>
+<p>Second, step-by-step playback and a side-by-side comparison. Right now you switch algorithms and compare two screens yourself. Watching the queue change tick by tick would make the convoy effect obvious.</p>
+<p>Third, more realism. Real processes alternate CPU and I/O bursts, and switching processes costs time, so I/O bursts and a context-switch cost would change which algorithm wins. A random workload generator, CSV export, and metrics like CPU utilization and throughput would help with bigger experiments.</p>
 </div>
 
 <p class="question">5. How does simulating CPU scheduling help you understand real-world operating system behavior? Give at least two insights you gained from this project.</p>
 <div class="answer" id="q5">
-<p>The first insight is the convoy effect. In T1 under FCFS, P3 only needs 2 ticks but waits 12 because it is stuck behind the 8-tick P1 and the 4-tick P2. Just by changing the order, SJF cut the average waiting time from 6.67 to 2.67 ticks, while the total work and the makespan of 14 ticks stayed the same. So a scheduler does not make the computer faster. It changes how long each user waits.</p>
-<p>The second insight is that every algorithm has a catch. SJF gives the best averages, but it needs to know the burst time before the process runs, which a real OS does not know. T2 also shows that without preemption a short job can still get stuck behind a long one.</p>
-<p>The third insight came from the Windows experiment. Textbook examples assume all cores are the same. On a real Intel laptop there are different kinds of cores, and even when we asked Windows to keep a thread on the efficient cores, it was there for only 365, 310 and 365 of 382 checks. Real scheduling also depends on core types, power settings and other running programs, which our simulator leaves out.</p>
+<p>First, the convoy effect. In T1 under FCFS, P3 needs 2 ticks but waits 12 behind P1 and P2. Just reordering cut average waiting from 6.67 to 2.67 ticks, while total work and the 14-tick makespan stayed the same. A scheduler doesn't make the machine faster; it changes who waits and how long.</p>
+<p>Second, every algorithm has a catch. SJF has the best averages, but it needs burst times up front, which a real OS doesn't have. T2 also shows that without preemption a short job can still get stuck behind a long one.</p>
+<p>Third, from the Windows experiment: textbooks assume identical cores. A real Intel laptop has different core types, and even when we asked Windows to keep a thread on efficient cores, it stayed there for only 365, 310 and 365 of 382 checks. Real scheduling also depends on core types, power settings and other programs, which our simulator leaves out on purpose.</p>
 </div>
 
 <!-- 10 -->
 <h2>10 References</h2>
 <ul class="refs">
-  <li>Instructor's assignment brief, <i>Final Project OS</i> (Operating Systems final project, two pages).</li>
-  <li>Intel Core i7-12650H processor specifications: https://www.intel.com/content/www/us/en/products/sku/226066/intel-core-i712650h-processor-24m-cache-up-to-4-70-ghz/specifications.html</li>
-  <li>Intel Thread Director overview: https://www.intel.com/content/www/us/en/support/articles/000097053/processors/intel-core-processors.html</li>
+  <li>Instructor's assignment brief, <i>Final Project OS</i>.</li>
+  <li>Intel Core i7-12650H specifications: https://www.intel.com/content/www/us/en/products/sku/226066/intel-core-i712650h-processor-24m-cache-up-to-4-70-ghz/specifications.html</li>
   <li>Microsoft, GetSystemCpuSetInformation: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getsystemcpusetinformation</li>
   <li>Microsoft, SetThreadSelectedCpuSets: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreadselectedcpusets</li>
   <li>Microsoft, CPU Sets: https://learn.microsoft.com/en-us/windows/win32/procthread/cpu-sets</li>
-  <li>SchedLab project documents in the repository: <code>plan.md</code>, <code>docs/core-contract.md</code>, <code>docs/web-contract.md</code>, <code>docs/hybrid-contract.md</code> and <code>docs/hardware-assumptions.md</code>.</li>
+  <li>SchedLab repository documents: <code>plan.md</code>, <code>docs/core-contract.md</code>, <code>docs/web-contract.md</code>, <code>docs/hybrid-contract.md</code>, <code>docs/hardware-assumptions.md</code>.</li>
 </ul>
 
 <script>
